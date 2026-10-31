@@ -24,7 +24,7 @@ import {
 import { db } from '../db/localDb';
 import { getCloudUrl } from '../utils/cloudConfig';
 
-export default function AuthScreen({ onAuthSuccess, onOpenSuperAdmin, theme, onBackToPortal }) {
+export default function AuthScreen({ onAuthSuccess, onOpenSuperAdmin, theme }) {
   const [isRegister, setIsRegister] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -471,27 +471,17 @@ export default function AuthScreen({ onAuthSuccess, onOpenSuperAdmin, theme, onB
 
       <div className="max-w-md w-full bg-white p-4 sm:p-8 rounded-3xl shadow-xl border border-blue-100 relative z-10">
         
-        {/* Back to Download Portal & Website */}
-        {onBackToPortal && (
-          <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
-            <button
-              type="button"
-              onClick={onBackToPortal}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 text-rose-500" />
-              <span>Download Portal & Website</span>
-            </button>
-            <a
-              href="tel:8778721940"
-              className="text-[11px] font-bold text-slate-600 hover:text-rose-600 transition flex items-center gap-1"
-              title="Call Helpline"
-            >
-              <Phone className="w-3 h-3 text-rose-500" />
-              <span>8778721940</span>
-            </a>
-          </div>
-        )}
+        {/* Helpline Header */}
+        <div className="flex justify-end items-center mb-4 pb-2 border-b border-slate-100">
+          <a
+            href="tel:8778721940"
+            className="text-[11px] font-bold text-slate-600 hover:text-rose-600 transition flex items-center gap-1"
+            title="Call Helpline"
+          >
+            <Phone className="w-3 h-3 text-rose-500" />
+            <span>Support: 8778721940</span>
+          </a>
+        </div>
 
         {/* Brand Header */}
         <div className="text-center mb-6">

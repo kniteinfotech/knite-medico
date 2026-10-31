@@ -22,8 +22,7 @@ import {
   X,
   ChevronRight,
   Store,
-  Sparkles,
-  Download
+  Sparkles
 } from 'lucide-react';
 import { SyncService } from '../services/syncService';
 import { useLanguage } from '../i18n/languageContext';
@@ -35,7 +34,6 @@ export default function Navbar({
   onOpenWhatsAppModal,
   onOpenGSTModal,
   onOpenPhonePeUpgrade,
-  onOpenDownloadPortal,
   onLogout,
   shopOwner,
   syncStatus, 
@@ -301,17 +299,6 @@ export default function Navbar({
               )}
             </div>
 
-            {/* Download Desktop App Button */}
-            {onOpenDownloadPortal && (
-              <button
-                onClick={onOpenDownloadPortal}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-500/30 bg-blue-50/80 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-xs font-bold transition shadow-sm"
-                title="Download Windows / Linux Desktop App & Guidelines"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span className="hidden xl:inline">Download App</span>
-              </button>
-            )}
 
             {/* Logout */}
             <div className="flex items-center pl-1 border-l border-[#ffd7db] dark:border-rose-950/40">
@@ -513,21 +500,6 @@ export default function Navbar({
                   <ChevronRight className="w-4 h-4 opacity-50" />
                 </button>
 
-                {onOpenDownloadPortal && (
-                  <button
-                    onClick={() => {
-                      setIsMobileDrawerOpen(false);
-                      onOpenDownloadPortal();
-                    }}
-                    className="w-full flex items-center justify-between p-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 font-bold text-xs hover:bg-blue-100 transition"
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <Download className="w-4 h-4 text-blue-600" />
-                      <span>Download Desktop App & Guides</span>
-                    </span>
-                    <ChevronRight className="w-4 h-4 opacity-50" />
-                  </button>
-                )}
               </div>
 
               {/* Multilingual Selector */}

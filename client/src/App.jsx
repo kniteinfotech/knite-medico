@@ -12,7 +12,6 @@ import GSTSettingsModal from './components/GSTSettingsModal';
 import SuperAdminPortal from './components/SuperAdminPortal';
 import PhonePeModal from './components/PhonePeModal';
 import PlanSelectionScreen from './components/PlanSelectionScreen';
-import DownloadPortal from './components/DownloadPortal';
 import { seedInitialDataIfEmpty, db } from './db/localDb';
 import { SyncService } from './services/syncService';
 
@@ -21,21 +20,6 @@ export default function App() {
   const [isAdminRoute, setIsAdminRoute] = useState(
     window.location.pathname.startsWith('/admin') || window.location.hash.includes('admin')
   );
-  const [currentView, setCurrentView] = useState(() => {
-    // If running in local native Electron desktop app or file:// protocol, ALWAYS open POS app directly
-    const isDesktopApp = typeof window !== 'undefined' && (
-      window.location.protocol === 'file:' ||
-      navigator.userAgent.includes('Electron') ||
-      (window.process && window.process.type === 'renderer')
-    );
-    if (isDesktopApp) return 'app';
-
-    // If URL points to app directly, launch app view
-    if (window.location.hash.includes('app') || window.location.pathname.startsWith('/app') || window.location.search.includes('app')) {
-      return 'app';
-    }
-    return 'portal';
-  });
   const [showPlanSelection, setShowPlanSelection] = useState(false); // Show plan screen for new users
   const [activeTab, setActiveTab] = useState('pos'); // pos, inventory, invoices, reports
   const [isCloudModalOpen, setIsCloudModalOpen] = useState(false);
@@ -45,16 +29,11 @@ export default function App() {
   const [lastSyncResult, setLastSyncResult] = useState(null);
   const [theme, setTheme] = useState(localStorage.getItem('knite_theme') || 'light');
 
-  // Listen to browser navigation changes (/admin vs / vs #/app)
+  // Listen to browser navigation changes (/admin)
   useEffect(() => {
     function handleLocationCheck() {
       const isAdm = window.location.pathname.startsWith('/admin') || window.location.hash.includes('admin');
       setIsAdminRoute(isAdm);
-      if (window.location.hash.includes('app') || window.location.pathname.startsWith('/app')) {
-        setCurrentView('app');
-      } else if (window.location.hash.includes('portal') || (!window.location.hash && window.location.pathname === '/')) {
-        setCurrentView('portal');
-      }
     }
 
     window.addEventListener('popstate', handleLocationCheck);
@@ -203,18 +182,6 @@ export default function App() {
     );
   }
 
-  // 1b. Website & App Download Portal
-  if (currentView === 'portal') {
-    return (
-      <DownloadPortal
-        onLaunchWebApp={() => {
-          window.location.hash = '#/app';
-          setCurrentView('app');
-        }}
-      />
-    );
-  }
-
   // 2. Normal Store App: If not logged in, show AuthScreen (Login first)
   if (!shopOwner) {
     return (
@@ -223,10 +190,6 @@ export default function App() {
         onOpenSuperAdmin={() => {
           window.history.pushState({}, '', '/admin');
           setIsAdminRoute(true);
-        }}
-        onBackToPortal={() => {
-          window.location.hash = '';
-          setCurrentView('portal');
         }}
         theme={theme}
       />
@@ -306,10 +269,6 @@ export default function App() {
         onOpenWhatsAppModal={() => setIsWhatsAppModalOpen(true)}
         onOpenGSTModal={() => setIsGSTModalOpen(true)}
         onOpenPhonePeUpgrade={() => setIsPhonePeModalOpen(true)}
-        onOpenDownloadPortal={() => {
-          window.location.hash = '';
-          setCurrentView('portal');
-        }}
         onLogout={handleLogout}
         shopOwner={shopOwner}
         syncStatus={lastSyncResult}
