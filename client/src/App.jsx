@@ -210,9 +210,9 @@ export default function App() {
     );
   }
 
-  // 2c. Subscription expiry blocking logic (2-day grace period for unpaid months)
+  // 2c. Subscription expiry blocking logic (1-day grace period for unpaid months)
   const isTrialStore = Boolean(shopOwner?.is_trial);
-  const GRACE_DAYS = isTrialStore ? 0 : 2;
+  const GRACE_DAYS = isTrialStore ? 0 : 1;
   const planExpiry = shopOwner?.plan_expires_at ? new Date(shopOwner.plan_expires_at) : null;
   const now = new Date();
   const isPaidPlan = !isDevUser && shopOwner?.plan_type !== 'free_dev';
@@ -220,7 +220,7 @@ export default function App() {
   const graceEnd = planExpiry ? new Date(planExpiry.getTime() + GRACE_DAYS * 24 * 60 * 60 * 1000) : null;
   const isInGrace = isExpired && graceEnd && now < graceEnd;
   const isFullyBlocked = isExpired && (!graceEnd || now >= graceEnd);
-  const daysLeft = graceEnd ? Math.max(0, Math.ceil((graceEnd - now) / (1000 * 60 * 60 * 24))) : 0;
+  const hoursLeft = graceEnd ? Math.max(1, Math.ceil((graceEnd - now) / (1000 * 60 * 60))) : 0;
 
   // Fully blocked — show renew screen
   if (isFullyBlocked) {
@@ -235,15 +235,15 @@ export default function App() {
           </h2>
           <p className="text-slate-500 text-sm mb-2">
             {isTrialStore 
-              ? 'Your 1-Day Free Trial has ended. Local offline database is safe on this device.'
-              : `Your ${shopOwner?.plan_type === 'cloud' ? 'Cloud Pro' : 'Local Basic'} subscription expired.`}
+              ? 'Your 1-Day Free Trial has ended.'
+              : 'Your monthly cloud subscription has expired and the 1-day grace period has ended.'}
           </p>
-          <p className="text-slate-500 text-sm mb-8">Please choose a plan to keep Cloud Sync, WhatsApp auto-send, and central backup active.</p>
+          <p className="text-slate-500 text-sm mb-8">Please complete your monthly renewal via Razorpay to keep Cloud Sync, WhatsApp billing, and automated backup active.</p>
           <button
             onClick={() => setShowPlanSelection(true)}
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#ff2c2c] to-[#f94449] text-white font-black text-base flex items-center justify-center gap-2 hover:shadow-xl hover:shadow-[#ff2c2c]/40 transition mb-4"
           >
-            🔄 Select Subscription Plan
+            💳 Pay via Razorpay (₹799/month)
           </button>
           <button
             onClick={handleLogout}
@@ -268,7 +268,7 @@ export default function App() {
         onOpenCloudModal={() => setIsCloudModalOpen(true)}
         onOpenWhatsAppModal={() => setIsWhatsAppModalOpen(true)}
         onOpenGSTModal={() => setIsGSTModalOpen(true)}
-        onOpenPhonePeUpgrade={() => setIsPhonePeModalOpen(true)}
+        onOpenPhonePeUpgrade={() => setShowPlanSelection(true)}
         onLogout={handleLogout}
         shopOwner={shopOwner}
         syncStatus={lastSyncResult}
@@ -285,18 +285,18 @@ export default function App() {
           <div className="mb-4 p-4 rounded-2xl bg-amber-50 border-2 border-amber-400 flex items-start gap-3">
             <span className="text-2xl shrink-0">⚠️</span>
             <div className="flex-1">
-              <p className="font-black text-amber-800 text-sm">Monthly Payment Due — 2-Day Grace Period ({daysLeft} day{daysLeft !== 1 ? 's' : ''} left)!</p>
+              <p className="font-black text-amber-800 text-sm">Monthly Payment Due — 1-Day Grace Period ({hoursLeft > 24 ? '1 day left' : `${hoursLeft} hour${hoursLeft !== 1 ? 's' : ''} left`})!</p>
               <p className="text-xs text-amber-700 mt-0.5">
-                Your {shopOwner?.plan_type === 'cloud' ? 'Cloud Pro' : 'Local Basic'} subscription expired on{' '}
+                Your monthly cloud subscription expired on{' '}
                 {planExpiry?.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}.
-                You have a 2-day grace period to complete payment before cloud features pause. Local database remains safe and non-erasable.
+                You have a 1-day (24-hour) grace period to complete payment before cloud features pause. Local database remains safe and non-erasable.
               </p>
             </div>
             <button
               onClick={() => setShowPlanSelection(true)}
               className="shrink-0 px-4 py-2 rounded-xl bg-amber-500 text-white text-xs font-black hover:bg-amber-600 transition"
             >
-              Renew Now
+              Pay via Razorpay
             </button>
           </div>
         )}

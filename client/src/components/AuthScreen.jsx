@@ -1043,10 +1043,10 @@ export default function AuthScreen({ onAuthSuccess, onOpenSuperAdmin, theme }) {
             <div className="overflow-y-auto p-5 text-xs leading-relaxed text-slate-700 space-y-4">
               {[
                 ['1. Service Provider', 'KNITE Medico is a SaaS product owned and operated by KNITE Infotech, Chennai, Tamil Nadu, India.'],
-                ['2. Subscription & Payments', 'Subscription fees (₹499/month for Local Basic, ₹1,299/month for Cloud Pro) are paid directly to KNITE Infotech via Razorpay Payment Gateway. All payments are final and non-refundable for the current billing period.'],
-                ['3. Payment Gateway Authorization', 'By subscribing, you authorize KNITE Infotech to collect subscription fees monthly/yearly via Razorpay Gateway (UPI, Credit/Debit Cards, Netbanking).'],
+                ['2. Subscription & Payments', 'Subscription fee is ₹799/month for All-In-One Cloud SaaS, paid directly to KNITE Infotech via Razorpay Payment Gateway. All payments are final for the active billing period.'],
+                ['3. Payment Gateway Authorization', 'By subscribing, you authorize KNITE Infotech to collect subscription fees monthly via Razorpay Gateway (UPI, AutoPay, Credit/Debit Cards, Netbanking).'],
                 ['4. Drug License Verification', 'New pharmacies must submit a valid Drug License (DL) for verification. KNITE Infotech reserves the right to deny access to pharmacies that fail statutory compliance checks.'],
-                ['5. Expiry & Grace Period', 'Upon subscription expiry, a 3-day grace period is provided. After the grace period, access to the software is suspended until payment is renewed.'],
+                ['5. Expiry & Grace Period', 'Upon monthly subscription expiry, a 1-day (24-hour) grace period is provided. After the grace period, cloud services are suspended until monthly payment is renewed.'],
                 ['6. Data Ownership', 'All pharmacy data (medicines, invoices, patients) belongs to the registered pharmacy owner. KNITE Infotech does not sell, share, or monetize customer data.'],
                 ['7. Service Uptime', '99.5% uptime guaranteed for cloud services. Local POS billing works offline regardless of cloud status.'],
                 ['8. Cancellation', 'Cancel anytime via account dashboard. No partial refunds. Local data is never deleted.'],

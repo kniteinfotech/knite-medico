@@ -478,11 +478,11 @@ router.post('/login', async (req, res) => {
             status: 'PENDING_PAYMENT',
             is_trial: Boolean(user.trial_used)
           },
-          message: 'Subscription payment required to access KNITE Medico SaaS. Please select a plan (₹599 or ₹799).'
+          message: 'Subscription payment required to access KNITE Medico SaaS. Please subscribe to continue (₹799/month).'
         });
       }
 
-      // Check subscription / 1-Day Trial expiration with 2-day grace period
+      // Check subscription / 1-Day Trial expiration with 1-day grace period
       if (user.plan_expires_at) {
         const expiryTime = new Date(user.plan_expires_at).getTime();
         const nowTime = Date.now();
@@ -490,19 +490,19 @@ router.post('/login', async (req, res) => {
         const isTrialExpired = !isPaid;
 
         if (nowTime > expiryTime) {
-          // 2 days grace period for paid monthly subscriptions (0 for 1-day free trial)
-          const GRACE_PERIOD_MS = isTrialExpired ? 0 : 2 * 24 * 60 * 60 * 1000;
+          // 1 day (24 hours) grace period for paid monthly subscriptions (0 for 1-day free trial)
+          const GRACE_PERIOD_MS = isTrialExpired ? 0 : 1 * 24 * 60 * 60 * 1000;
           const graceEndTime = expiryTime + GRACE_PERIOD_MS;
 
           if (nowTime < graceEndTime) {
-            // User is currently within the 2-day grace period! Allow login with warning
+            // User is currently within the 1-day grace period! Allow login with warning
             const daysRemaining = Math.max(1, Math.ceil((graceEndTime - nowTime) / (1000 * 60 * 60 * 24)));
             user.in_grace_period = true;
             user.grace_days_left = daysRemaining;
             user.grace_end = new Date(graceEndTime).toISOString();
-            console.log(`⏳ User ${cleanEmail} logged in during 2-day grace period (${daysRemaining} day(s) left)`);
+            console.log(`⏳ User ${cleanEmail} logged in during 1-day grace period (${daysRemaining} day left)`);
           } else {
-            // Past 2-day grace period — access blocked
+            // Past 1-day grace period — access blocked
             return res.status(403).json({
               error: 'SUBSCRIPTION_EXPIRED',
               requiresPayment: true,
@@ -520,8 +520,8 @@ router.post('/login', async (req, res) => {
                 plan_expires_at: user.plan_expires_at
               },
               message: isTrialExpired
-                ? 'Your 1-day free trial has expired. Please choose a plan (₹599 or ₹799) to keep cloud services active.'
-                : 'Your monthly subscription has expired and the 2-day grace period has ended. Please renew via Razorpay / PhonePe to continue access.'
+                ? 'Your 1-day free trial has expired. Please subscribe to Pro Cloud (₹799/month) to keep cloud services active.'
+                : 'Your monthly subscription has expired and the 1-day grace period has ended. Please renew via Razorpay to continue access.'
             });
           }
         }

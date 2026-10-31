@@ -11,71 +11,28 @@ import { getCloudUrl } from '../utils/cloudConfig';
 
 const PLANS = [
   {
-    id: 'local_599',
-    name: 'Basic POS Billing',
-    badge: 'Offline Only',
-    badgeColor: 'bg-slate-700',
-    monthlyBase: 599,
-    yearlyBase: 5999,    // Save ~₹1,189 (approx ₹499/mo)
-    yearlyMonthly: 499,
-    color: 'from-slate-800 to-slate-900',
-    icon: Monitor,
-    tagline: 'Essential POS billing & local inventory — offline first',
-    features: [
-      { label: 'POS Billing & GST Invoices', included: true },
-      { label: 'Inventory & Expiry Management', included: true },
-      { label: 'Thermal & PDF Receipts', included: true },
-      { label: 'Unlimited Local Invoices', included: true },
-      { label: 'GST Slab Management', included: true },
-      { label: 'WhatsApp Invoices', included: false, notice: 'Requires Pro Cloud (₹799)' },
-      { label: 'Medicine Descriptions in Bill', included: false, notice: 'Requires Pro Cloud (₹799)' },
-      { label: 'Cloud Sync & Central Backup', included: false, notice: 'Requires Pro Cloud (₹799)' },
-      { label: 'Multi-Device Access', included: false },
-      { label: 'Priority Support', included: false },
-    ]
-  },
-  {
     id: 'cloud_799',
-    name: 'Pro Cloud & WhatsApp',
-    badge: '⭐ Recommended',
-    badgeColor: 'bg-gradient-to-r from-[#ff2c2c] to-rose-500',
+    name: 'All-In-One Cloud SaaS',
+    badge: '⭐ Official Cloud Plan',
+    badgeColor: 'bg-gradient-to-r from-[#ff2c2c] to-rose-600',
     monthlyBase: 799,
-    yearlyBase: 7999,   // Save ~₹1,589 (approx ₹666/mo)
+    yearlyBase: 7999,
     yearlyMonthly: 666,
-    color: 'from-[#ff2c2c] to-rose-700',
+    color: 'from-[#0f172a] via-[#1e1b4b] to-rose-950',
     icon: Cloud,
-    tagline: 'Complete SaaS with Cloud Sync, WhatsApp Billing & Multilingual',
+    tagline: 'Complete Pharmacy Cloud POS, WhatsApp Invoicing & Central Sync',
     features: [
-      { label: 'Everything in Basic POS', included: true },
-      { label: 'Real-Time Cloud Sync (every 45s)', included: true },
-      { label: 'Central PostgreSQL Cloud Backup', included: true },
-      { label: 'WhatsApp Bill Auto-Send (Headless)', included: true },
-      { label: 'Multilingual Bills (Tamil, Malayalam, Hindi, Eng)', included: true },
-      { label: 'Medicine Clinical Descriptions in Bill', included: true },
-      { label: 'Multi-Device Continuous Access', included: true },
-      { label: 'Monthly AutoPay Mandate Support', included: true },
-      { label: 'Priority Support from KNITE Infotech', included: true },
-      { label: 'Remote Data Recovery Guarantee', included: true },
-    ]
-  },
-  {
-    id: 'enterprise_1299',
-    name: 'Enterprise Multi-Branch',
-    badge: 'Multi-Branch',
-    badgeColor: 'bg-indigo-700',
-    monthlyBase: 1299,
-    yearlyBase: 12999,
-    yearlyMonthly: 1083,
-    color: 'from-indigo-900 to-slate-900',
-    icon: Zap,
-    tagline: 'For pharmacy chains & multi-counter operations',
-    features: [
-      { label: 'Everything in Pro Cloud (₹799)', included: true },
-      { label: 'Centralized Multi-Branch Synchronization', included: true },
-      { label: 'Inter-Branch Stock Transfers & Alerts', included: true },
-      { label: 'Custom Drug Formulary & API Access', included: true },
-      { label: 'Dedicated Account Manager', included: true },
-      { label: '24/7 Priority Support SLA', included: true },
+      { label: 'POS Billing & GST Invoices (Thermal & PDF)', included: true },
+      { label: 'Real-Time Cloud Sync (Continuous Cloud Database)', included: true },
+      { label: 'Automated WhatsApp Invoicing to Patients', included: true },
+      { label: 'Medicine Expiry & Batch Inventory Alerts', included: true },
+      { label: 'Multi-Device Web Access (PC, Tablet & Mobile)', included: true },
+      { label: 'Multilingual Support (Tamil, Hindi, English)', included: true },
+      { label: 'Medicine Clinical Descriptions & Formularies', included: true },
+      { label: '1-Day Grace Period on Monthly Renewal', included: true },
+      { label: 'Instant Activation via Razorpay AutoPay / UPI', included: true },
+      { label: 'Automated Central Backups & Remote Data Safety', included: true },
+      { label: 'Priority Support from KNITE Infotech', included: true }
     ]
   }
 ];
@@ -83,23 +40,23 @@ const PLANS = [
 const FAQS = [
   {
     q: 'How does the Razorpay Payment Gateway work?',
-    a: 'Razorpay supports UPI (Google Pay, PhonePe, Paytm, BHIM), Credit & Debit Cards, Netbanking (all major Indian banks), and Wallets. Payment is instant and activates your subscription immediately.'
+    a: 'Razorpay supports UPI (Google Pay, PhonePe, Paytm, BHIM), Credit & Debit Cards, Netbanking (all major Indian banks), and Wallets. Payment is instant and activates your monthly subscription immediately.'
   },
   {
     q: 'How does Monthly AutoPay work?',
     a: 'When you enable AutoPay, your monthly subscription will be debited automatically via your UPI or Card mandate each month. No manual renewal is needed, and you will receive a digital tax invoice via kniteinfotech@gmail.com every month.'
   },
   {
-    q: 'Can I upgrade from Basic (₹599) to Pro Cloud (₹799) later?',
-    a: 'Yes, anytime! Simply navigate to Cloud Sync or click upgrade on WhatsApp/Descriptions in POS Billing to upgrade immediately.'
+    q: 'What is the subscription price?',
+    a: 'KNITE Medico is ₹799/month all-inclusive with no hidden fees. All cloud features, WhatsApp billing, and automated backups are included.'
   },
   {
     q: 'Are official tax invoices provided for my payments?',
     a: 'Yes! As soon as your Razorpay payment succeeds, an official GST tax invoice with payment ID, order details, and mandate status is automatically sent to your registered email from kniteinfotech@gmail.com.'
   },
   {
-    q: 'What happens when my subscription expires?',
-    a: 'If a subscription expires, you receive a 3-day grace period. After 3 days, online features are paused until renewed. Your offline pharmacy data is 100% secure on your local device.'
+    q: 'What happens when my monthly subscription expires?',
+    a: 'When a subscription expires, you receive a 1-day grace period to complete your monthly renewal. After 24 hours, cloud access is paused until renewed. Your stored data is 100% secure.'
   },
   {
     q: 'Can I cancel AutoPay anytime?',
@@ -466,7 +423,7 @@ export default function PlanSelectionScreen({ shopOwner, onPlanSelected, isModal
                   )}
                 </div>
                 <h4 className="text-lg font-black mt-1">
-                  {isPaidUser ? (currentPlanType.includes('pos') || currentPlanType.includes('599') ? 'Basic POS Billing (₹599)' : currentPlanType.includes('enterprise') ? 'Enterprise Multi-Branch (₹1,299)' : 'Pro Cloud & WhatsApp (₹799)') : '1-Day Free Trial'}
+                  {isPaidUser ? 'All-In-One Cloud SaaS (₹799/mo)' : '1-Day Free Trial'}
                 </h4>
                 <p className="text-xs text-slate-300 mt-0.5">
                   {isPaidUser ? `Valid & active until ${formattedExpiry}` : 'Full access to POS Billing, Cloud Sync, and WhatsApp Dispatch'}
@@ -500,70 +457,61 @@ export default function PlanSelectionScreen({ shopOwner, onPlanSelected, isModal
             </div>
           </div>
 
-          {/* Plan Cards (3 Columns) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Single Unified Cloud Plan Card */}
+          <div className="max-w-2xl mx-auto mb-8">
             {PLANS.map(plan => {
               const Icon = plan.icon;
               const base = billing === 'yearly' ? plan.yearlyBase : plan.monthlyBase;
               const monthlyEq = billing === 'yearly' ? plan.yearlyMonthly : plan.monthlyBase;
-              const isPopular = plan.id === 'cloud_799';
 
               return (
                 <div key={plan.id}
-                  className={`relative rounded-3xl border-2 overflow-hidden cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 bg-white flex flex-col justify-between ${
-                    isPopular ? 'border-[#ff2c2c] shadow-xl shadow-rose-500/15 ring-2 ring-[#ff2c2c]/20' : 'border-slate-200 shadow-md'
-                  }`}
-                  onClick={() => handleSelectPlan(plan)}>
+                  className="relative rounded-3xl border-2 border-[#ff2c2c] shadow-2xl shadow-rose-500/15 overflow-hidden bg-white ring-2 ring-[#ff2c2c]/20 flex flex-col justify-between">
 
-                  <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-[11px] font-black text-white ${plan.badgeColor}`}>
+                  <div className={`absolute top-5 right-5 px-3 py-1 rounded-full text-[11px] font-black text-white shadow-md ${plan.badgeColor}`}>
                     {plan.badge}
                   </div>
 
                   <div>
-                    <div className={`p-6 bg-gradient-to-br ${plan.color} text-white`}>
-                      <Icon className="w-8 h-8 mb-3 opacity-95" />
-                      <h3 className="text-xl font-black">{plan.name}</h3>
-                      <p className="text-xs opacity-90 mt-1 font-medium">{plan.tagline}</p>
-
-                      <div className="mt-4 flex items-baseline gap-2">
-                        <span className="text-3xl font-black">₹{base.toLocaleString('en-IN')}</span>
-                        <span className="text-xs opacity-80 font-bold">{billing === 'yearly' ? '/year' : '/month'}</span>
+                    <div className={`p-6 sm:p-8 bg-gradient-to-br ${plan.color} text-white`}>
+                      <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mb-4 backdrop-blur-sm">
+                        <Icon className="w-7 h-7 opacity-95 text-rose-400" />
                       </div>
-                      <div className="mt-1 text-xs opacity-90 space-y-0.5">
+                      <h3 className="text-2xl font-black">{plan.name}</h3>
+                      <p className="text-xs sm:text-sm opacity-90 mt-1 font-medium">{plan.tagline}</p>
+
+                      <div className="mt-5 flex items-baseline gap-2">
+                        <span className="text-4xl sm:text-5xl font-black">₹{base.toLocaleString('en-IN')}</span>
+                        <span className="text-sm opacity-80 font-bold">{billing === 'yearly' ? '/year' : '/month'}</span>
+                      </div>
+                      <div className="mt-1 text-xs opacity-90">
                         {billing === 'yearly' && (
                           <p className="text-emerald-300 font-bold">≈ ₹{monthlyEq}/month • Save ₹{(plan.monthlyBase * 12 - plan.yearlyBase).toLocaleString('en-IN')}</p>
                         )}
                       </div>
-                      <p className="text-[11px] opacity-80 mt-1.5 font-medium">✓ Instant Active Service • Razorpay Secure</p>
+                      <p className="text-xs opacity-80 mt-2 font-medium">✓ Instant Active Service • 1-Day Grace Period • Razorpay Secure</p>
                     </div>
 
-                    <div className="p-5 flex flex-col gap-2.5 bg-white">
-                      {plan.features.map((feat, i) => (
-                        <div key={i} className="flex items-start gap-2">
-                          {feat.included
-                            ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                            : <X className="w-4 h-4 text-slate-300 shrink-0 mt-0.5" />}
-                          <div className="flex flex-col">
-                            <span className={`text-xs font-semibold ${feat.included ? 'text-slate-800' : 'text-slate-400 line-through'}`}>
+                    <div className="p-6 sm:p-8 bg-white">
+                      <p className="text-xs font-black uppercase tracking-wider text-slate-400 mb-4">Included in this plan:</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                        {plan.features.map((feat, i) => (
+                          <div key={i} className="flex items-start gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                            <span className="text-xs font-semibold text-slate-800">
                               {feat.label}
                             </span>
-                            {feat.notice && (
-                              <span className="text-[10px] text-amber-600 font-bold">{feat.notice}</span>
-                            )}
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                        ))}
+                      </div>
 
-                  <div className="p-5 pt-0 bg-white">
-                    <button className={`w-full py-3.5 rounded-2xl font-black text-xs flex items-center justify-center gap-2 transition ${
-                      isPopular 
-                        ? 'bg-gradient-to-r from-[#ff2c2c] to-[#f94449] text-white hover:shadow-lg hover:shadow-[#ff2c2c]/30' 
-                        : 'bg-slate-900 text-white hover:bg-slate-800'
-                    }`}>
-                      <Zap className="w-4 h-4" /> Subscribe Plan
-                    </button>
+                      <button
+                        onClick={() => handleSelectPlan(plan)}
+                        className="w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 bg-gradient-to-r from-[#ff2c2c] to-[#f94449] text-white hover:shadow-xl hover:shadow-[#ff2c2c]/30 transition"
+                      >
+                        <Zap className="w-5 h-5" /> Subscribe via Razorpay (₹{base.toLocaleString('en-IN')}{billing === 'yearly' ? '/yr' : '/mo'})
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

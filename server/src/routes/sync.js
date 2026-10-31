@@ -35,8 +35,8 @@ async function requirePaidCloudSubscription(req, res, next) {
     }
 
     const isPaid = tenant.plan_type === 'pro_cloud' || tenant.plan_type === 'cloud_799' || tenant.plan_type === 'cloud' || tenant.plan_type === 'enterprise' || tenant.plan_type === 'enterprise_1299';
-    // 2-day grace period for cloud sync if monthly payment is pending
-    const gracePeriodMs = 2 * 24 * 60 * 60 * 1000;
+    // 1-day grace period for cloud sync if monthly payment is pending
+    const gracePeriodMs = 1 * 24 * 60 * 60 * 1000;
     const notExpired = tenant.plan_expires_at && (new Date(tenant.plan_expires_at).getTime() + gracePeriodMs) > Date.now();
 
     if (tenant.status === 'APPROVED' && isPaid && notExpired) {
