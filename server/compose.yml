@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: knite-medico-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${DB_NAME:-knite_db}
+      - POSTGRES_USER=${DB_USER:-admin}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    command: >
+      postgres
+        -c max_connections=200
+        -c shared_buffers=512MB
+        -c effective_cache_size=1536MB
+        -c maintenance_work_mem=128MB
+        -c checkpoint_completion_target=0.9
+        -c wal_buffers=64MB
+        -c default_statistics_target=100
+        -c random_page_cost=1.1
+        -c effective_io_concurrency=200
+        -c work_mem=8MB
+        -c min_wal_size=256MB
+        -c max_wal_size=2GB
+    volumes:
+      # 1 TB HDD (/dev/sda1) — All PostgreSQL tenant cloud database files stored here
+      - /data/knite-medico/postgres-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-admin} -d ${DB_NAME:-knite_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  knite-medico-backend:
+    build: .
+    container_name: knite-medico-backend
+    restart: unless-stopped
+    ports:
+      - "5055:5055"
+    environment:
+      - PORT=5055
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-knite_db}
+      - DB_USER=${DB_USER:-admin}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - SUPERADMIN_KEY=${SUPERADMIN_KEY}
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+      - PHONEPE_MERCHANT_ID=${PHONEPE_MERCHANT_ID}
+      - PHONEPE_SALT_KEY=${PHONEPE_SALT_KEY}
+      - SMTP_USER=${SMTP_USER}
+      - GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
+      - SMTP_PASS=${SMTP_PASS}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      # 1 TB HDD — Per-shop backup folder (e.g. /data/backups/nitheesh kadai/)
+      - HDD_BACKUP_PATH=/data/backups
+      - NODE_ENV=production
+      - UV_THREADPOOL_SIZE=16
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./.env:/app/.env
+      # 1 TB HDD — Per-shop backup folders (shop name as folder, e.g. "nitheesh kadai")
+      - /mnt/1tb-hdd/knite-medico/backups:/data/backups
+      - ./whatsapp_sessions:/app/whatsapp_sessions
+    networks:
+      - backend
+      - nginx-proxy-manager_default
+
+  knite-medico-frontend:
+    image: nginx:alpine
+    container_name: knite-medico-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    volumes:
+      - ../client/dist:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - knite-medico-backend
+    networks:
+      - backend
+      - nginx-proxy-manager_default
+
+networks:
+  backend:
+  nginx-proxy-manager_default:
+    external: true

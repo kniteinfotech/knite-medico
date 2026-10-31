@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">KNITE Medico</string>
+    <string name="title_activity_main">KNITE Medico</string>
+    <string name="package_name">com.knite.medico</string>
+    <string name="custom_url_scheme">com.knite.medico</string>
+</resources>

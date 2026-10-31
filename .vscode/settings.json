@@ -1,0 +1,14 @@
+{
+    "files.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/dist-electron": true,
+        "**/public/downloads": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/dist-electron": true,
+        "**/public/downloads": true
+    }
+}

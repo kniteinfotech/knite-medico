@@ -1,0 +1,12 @@
+{
+  "appId": "com.knite.medico",
+  "appName": "KNITE Medico",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}

@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment and Secret Files (CRITICAL: NEVER COMMIT)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+
+# Build outputs
+dist/
+dist-electron/
+build/
+out/
+*.exe
+*.AppImage
+*.deb
+*.dmg
+*.zip
+*.tar.gz
+*.iso
+*.bak
+*.tmp
+
+# Logs & Temporary files
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+scratch/
+
+# Application Runtime Storage & Sessions
+server/whatsapp_sessions/
+whatsapp_sessions/
+*.sqlite
+*.db
+
+# Hard disk mount points & data backups
+/data/backups/
+/mnt/1tb-hdd/
