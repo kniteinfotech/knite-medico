@@ -1,9 +1,16 @@
 {
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "https://knite-medico-backend.onrender.com/api/$1"
+    },
+    {
+      "source": "/health",
+      "destination": "https://knite-medico-backend.onrender.com/health"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
 }
-
