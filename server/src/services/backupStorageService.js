@@ -1,5 +1,55 @@
 const fs = require('fs');
 const path = require('path');
+const { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
+
+const NEON_BUCKET = process.env.NEON_S3_BUCKET || 'assets';
+
+function getNeonS3Client() {
+  if (!process.env.AWS_ENDPOINT_URL_S3 || !process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+    return null;
+  }
+  return new S3Client({
+    region: process.env.AWS_REGION || 'ap-southeast-1',
+    endpoint: process.env.AWS_ENDPOINT_URL_S3,
+    forcePathStyle: true,
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    }
+  });
+}
+
+async function uploadToNeonStorage(key, body, contentType = 'application/json') {
+  const s3 = getNeonS3Client();
+  if (!s3) return { skipped: true, reason: 'Neon Object Storage env vars not configured' };
+  await s3.send(new PutObjectCommand({
+    Bucket: NEON_BUCKET,
+    Key: key,
+    Body: typeof body === 'string' ? body : JSON.stringify(body),
+    ContentType: contentType
+  }));
+  return { success: true, bucket: NEON_BUCKET, key };
+}
+
+async function listNeonStorage(prefix = '') {
+  const s3 = getNeonS3Client();
+  if (!s3) return { skipped: true, objects: [] };
+  const res = await s3.send(new ListObjectsV2Command({
+    Bucket: NEON_BUCKET,
+    Prefix: prefix
+  }));
+  return { success: true, bucket: NEON_BUCKET, objects: res.Contents || [] };
+}
+
+async function getFromNeonStorage(key) {
+  const s3 = getNeonS3Client();
+  if (!s3) return null;
+  const res = await s3.send(new GetObjectCommand({
+    Bucket: NEON_BUCKET,
+    Key: key
+  }));
+  return res.Body.transformToString();
+}
 
 // Base backup directory targeting the 1 TB Hard Disk HDD mounted at /data
 // Default is /data/backups, with fallback to ./backups in project
@@ -87,6 +137,12 @@ function saveBackupToHdd(shopName, backupPayload, backupName) {
     const sizeBytes = Buffer.byteLength(dataToWrite, 'utf8');
     console.log(`💾 [1 TB HDD Backup] Saved ${Math.round(sizeBytes / 1024)} KB to "${targetFile}"`);
 
+    // Mirror asynchronously to Neon Object Storage when configured
+    const folderName = sanitizeShopFolderName(shopName);
+    uploadToNeonStorage(`backups/${folderName}/${filename}`, dataToWrite).catch((err) => {
+      console.error('⚠️ Neon Object Storage mirror error:', err.message);
+    });
+
     return {
       success: true,
       filename,
@@ -160,5 +216,8 @@ module.exports = {
   ensureShopHddFolder,
   saveBackupToHdd,
   listHddBackups,
-  getHddBackupData
+  getHddBackupData,
+  uploadToNeonStorage,
+  listNeonStorage,
+  getFromNeonStorage
 };

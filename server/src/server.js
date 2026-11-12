@@ -1,7 +1,14 @@
+const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-require('dotenv').config();
+const dotenv = require('dotenv');
+const rootEnvLocal = path.resolve(__dirname, '../../.env.local');
+if (fs.existsSync(rootEnvLocal)) {
+  dotenv.config({ path: rootEnvLocal });
+}
+dotenv.config();
 
 const { initDB } = require('./db');
 const { sanitizeInputs } = require('./middleware/sanitizer');
@@ -14,6 +21,7 @@ const whatsappRouter = require('./routes/whatsapp');
 const whatsappManager = require('./services/whatsappManager');
 const phonepeRouter = require('./routes/phonepe');
 const razorpayRouter = require('./routes/razorpay');
+const neonRouter = require('./routes/neon');
 
 const app = express();
 const PORT = process.env.PORT || 5055;
@@ -111,6 +119,7 @@ app.use('/api/admin', adminRouter);
 app.use('/api/whatsapp', whatsappRouter);
 app.use('/api/phonepe', phonepeRouter);
 app.use('/api/razorpay', razorpayRouter);
+app.use('/api/neon', neonRouter);
 
 // System Health Check Endpoint
 app.get('/health', (req, res) => {

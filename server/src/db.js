@@ -1,20 +1,32 @@
 const { Pool } = require('pg');
 
-const pool = new Pool({
-  host: process.env.DB_HOST || 'postgres',
-  port: parseInt(process.env.DB_PORT || '5432', 10),
-  database: process.env.DB_NAME || 'knite_db',
-  user: process.env.DB_USER || 'admin',
-  password: process.env.DB_PASSWORD,
-  max: 50,                      // Support up to 50 concurrent cloud-user connections
-  min: 5,                       // Keep minimum connections warm for fast response
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 8000,
-  statement_timeout: 15000,     // 15s max query time (covers full-export for large stores)
-  query_timeout: 15000,
-  keepAlive: true,              // Prevent idle connection drops
-  keepAliveInitialDelayMillis: 10000
-});
+const poolConfig = process.env.DATABASE_URL
+  ? {
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false },
+      max: parseInt(process.env.DB_MAX_CONNECTIONS || '20', 10),
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+      statement_timeout: 15000,
+      query_timeout: 15000
+    }
+  : {
+      host: process.env.DB_HOST || 'postgres',
+      port: parseInt(process.env.DB_PORT || '5432', 10),
+      database: process.env.DB_NAME || 'knite_db',
+      user: process.env.DB_USER || 'admin',
+      password: process.env.DB_PASSWORD,
+      max: 50,                      // Support up to 50 concurrent cloud-user connections
+      min: 5,                       // Keep minimum connections warm for fast response
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 8000,
+      statement_timeout: 15000,     // 15s max query time (covers full-export for large stores)
+      query_timeout: 15000,
+      keepAlive: true,              // Prevent idle connection drops
+      keepAliveInitialDelayMillis: 10000
+    };
+
+const pool = new Pool(poolConfig);
 
 // Graceful pool error handler (prevents crash on stale connections)
 pool.on('error', (err) => {

@@ -5,6 +5,12 @@
  */
 
 export const getCloudUrl = () => {
+  // 1. Check explicit build-time or runtime Vite env variable
+  if (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.trim()) {
+    return import.meta.env.VITE_API_URL.trim().replace(/\/+$/, '');
+  }
+
+  // 2. Check custom user override in browser storage
   const custom = localStorage.getItem('knite_cloud_url');
   if (custom && custom.trim()) {
     return custom.trim().replace(/\/+$/, '');

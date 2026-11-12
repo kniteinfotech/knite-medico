@@ -45,3 +45,4 @@ whatsapp_sessions/
 # Hard disk mount points & data backups
 /data/backups/
 /mnt/1tb-hdd/
+.neon
