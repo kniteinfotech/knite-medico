@@ -214,13 +214,13 @@ router.post('/register', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 12);
 
     const isWhitelistedFree = isFreeUser(cleanEmail);
-    const initialStatus = 'APPROVED';
-    const chosenPlan = plan_type || 'cloud_799';
-    const trialExpiresAt = isWhitelistedFree 
+    const initialStatus = isWhitelistedFree ? 'APPROVED' : 'PENDING_PAYMENT';
+    const chosenPlan = 'cloud_900';
+    const planExpiresAt = isWhitelistedFree 
       ? new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000).toISOString()
-      : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 1-Day Free Trial
+      : null; // Must pay monthly subscription to activate
 
-    // Create Tenant record with 1-Day Free Trial
+    // Create Tenant record
     await client.query(
       `INSERT INTO medico.tenants (
         id, shop_name, owner_name, email, phone, dl_number, gstin, address, license_key, plan_type, status, plan_expires_at, trial_used
@@ -237,7 +237,7 @@ router.post('/register', async (req, res) => {
         licenseKey,
         chosenPlan,
         initialStatus,
-        trialExpiresAt
+        planExpiresAt
       ]
     );
 
@@ -302,10 +302,10 @@ router.post('/register', async (req, res) => {
     return res.status(201).json({
       success: true,
       token,
-      isTrial: !isWhitelistedFree,
+      requiresPayment: !isWhitelistedFree,
       message: isWhitelistedFree 
         ? 'Welcome! Store activated with developer lifetime access.'
-        : 'Welcome! Your 1-Day Free Trial (Pro Cloud & POS) has been activated successfully.',
+        : 'Welcome! Account created successfully. Complete your ₹900/mo subscription payment to activate POS.',
       tenant: {
         id: tenantId,
         shop_name,
@@ -317,9 +317,9 @@ router.post('/register', async (req, res) => {
         address,
         license_key: licenseKey,
         plan_type: chosenPlan,
-        status: 'APPROVED',
-        is_trial: !isWhitelistedFree,
-        plan_expires_at: trialExpiresAt
+        status: initialStatus,
+        is_trial: false,
+        plan_expires_at: planExpiresAt
       }
     });
   } catch (err) {
@@ -486,7 +486,7 @@ router.post('/login', async (req, res) => {
       if (user.plan_expires_at) {
         const expiryTime = new Date(user.plan_expires_at).getTime();
         const nowTime = Date.now();
-        const isPaid = ['pro_cloud', 'cloud_799', 'pos_599', 'local_599', 'pos_basic', 'enterprise', 'enterprise_1299', 'enterprise_1499'].includes(user.plan_type);
+        const isPaid = ['cloud_900', 'pro_cloud', 'cloud_799', 'pos_599', 'local_599', 'pos_basic', 'enterprise', 'enterprise_1299', 'enterprise_1499'].includes(user.plan_type);
         const isTrialExpired = !isPaid;
 
         if (nowTime > expiryTime) {
@@ -577,7 +577,7 @@ router.post('/login', async (req, res) => {
       maxAge: 30 * 24 * 60 * 60 * 1000
     });
 
-    const PAID_PLANS = ['pro_cloud', 'cloud_799', 'pos_599', 'local_599', 'pos_basic', 'enterprise', 'enterprise_1299', 'enterprise_1499'];
+    const PAID_PLANS = ['cloud_900', 'pro_cloud', 'cloud_799', 'pos_599', 'local_599', 'pos_basic', 'enterprise', 'enterprise_1299', 'enterprise_1499'];
     const isPaidPlan = PAID_PLANS.includes(user.plan_type);
     const isTrialUser = !isPaidPlan && (user.plan_type === 'trial' || user.plan_type === 'free_trial' || Boolean(user.trial_used));
 

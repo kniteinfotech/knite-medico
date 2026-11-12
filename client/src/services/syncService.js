@@ -26,7 +26,7 @@ export class SyncService {
   // Push local changes to Cloud Server (Paid Pro Cloud feature)
   static async pushSync() {
     const storeProfile = await db.settings.get('store_profile');
-    const paidCloudPlans = ['pro_cloud', 'cloud_799', 'cloud', 'enterprise', 'enterprise_1299', 'enterprise_1499'];
+    const paidCloudPlans = ['cloud_900', 'pro_cloud', 'cloud_799', 'cloud', 'enterprise', 'enterprise_1299', 'enterprise_1499'];
     const userEmail = (storeProfile?.email || '').toLowerCase();
     const isCloudPlan = storeProfile && (paidCloudPlans.includes(storeProfile.plan_type) || userEmail.includes('nitheesh'));
 

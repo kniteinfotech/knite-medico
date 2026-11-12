@@ -11,19 +11,17 @@ import { getCloudUrl } from '../utils/cloudConfig';
 
 const PLANS = [
   {
-    id: 'cloud_799',
+    id: 'cloud_900',
     name: 'All-In-One Cloud SaaS',
-    badge: '⭐ Official Cloud Plan',
+    badge: '⭐ Official Pharmacy Cloud Plan',
     badgeColor: 'bg-gradient-to-r from-[#ff2c2c] to-rose-600',
-    monthlyBase: 799,
-    yearlyBase: 7999,
-    yearlyMonthly: 666,
+    monthlyBase: 900,
     color: 'from-[#0f172a] via-[#1e1b4b] to-rose-950',
     icon: Cloud,
     tagline: 'Complete Pharmacy Cloud POS, WhatsApp Invoicing & Central Sync',
     features: [
       { label: 'POS Billing & GST Invoices (Thermal & PDF)', included: true },
-      { label: 'Real-Time Cloud Sync (Continuous Cloud Database)', included: true },
+      { label: 'Real-Time Cloud Sync (Continuous Neon Database)', included: true },
       { label: 'Automated WhatsApp Invoicing to Patients', included: true },
       { label: 'Medicine Expiry & Batch Inventory Alerts', included: true },
       { label: 'Multi-Device Web Access (PC, Tablet & Mobile)', included: true },
@@ -43,12 +41,12 @@ const FAQS = [
     a: 'Razorpay supports UPI (Google Pay, PhonePe, Paytm, BHIM), Credit & Debit Cards, Netbanking (all major Indian banks), and Wallets. Payment is instant and activates your monthly subscription immediately.'
   },
   {
-    q: 'How does Monthly AutoPay work?',
-    a: 'When you enable AutoPay, your monthly subscription will be debited automatically via your UPI or Card mandate each month. No manual renewal is needed, and you will receive a digital tax invoice via kniteinfotech@gmail.com every month.'
+    q: 'How is the payment calculated?',
+    a: 'The base pharmacy SaaS subscription is ₹900/month. A ₹22 payment gateway processing charge (Razorpay 2% fee + 18% GST) is added at checkout, bringing the total to ₹922/month. Exactly ₹900 net is credited per shop.'
   },
   {
-    q: 'What is the subscription price?',
-    a: 'KNITE Medico is ₹799/month all-inclusive with no hidden fees. All cloud features, WhatsApp billing, and automated backups are included.'
+    q: 'How does Monthly AutoPay work?',
+    a: 'When you enable AutoPay, your monthly subscription will be debited automatically via your UPI or Card mandate each month. No manual renewal is needed, and you will receive a digital tax invoice via kniteinfotech@gmail.com every month.'
   },
   {
     q: 'Are official tax invoices provided for my payments?',
@@ -66,7 +64,7 @@ const FAQS = [
 
 export default function PlanSelectionScreen({ shopOwner, onPlanSelected, isModal = false, onClose, theme }) {
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [billing, setBilling] = useState('monthly'); // 'monthly' | 'yearly'
+  const [billing] = useState('monthly'); // Strictly monthly
   const [step, setStep] = useState('plans'); // 'plans' | 'terms' | 'payment' | 'success'
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [autoPay, setAutoPay] = useState(true); // AutoPay enabled by default
@@ -78,17 +76,18 @@ export default function PlanSelectionScreen({ shopOwner, onPlanSelected, isModal
 
   const cloudUrl = getCloudUrl();
 
-  const paidPlansList = ['pro_cloud', 'cloud_799', 'pos_599', 'local_599', 'pos_basic', 'enterprise', 'enterprise_1299', 'enterprise_1499'];
-  const currentPlanType = shopOwner?.plan_type || 'trial';
-  const isPaidUser = paidPlansList.includes(currentPlanType);
+  const paidPlansList = ['cloud_900', 'pro_cloud', 'cloud_799', 'pos_599', 'local_599', 'pos_basic', 'enterprise', 'enterprise_1299', 'enterprise_1499'];
+  const currentPlanType = shopOwner?.plan_type || 'unpaid';
+  const isDevUser = (shopOwner?.email || '').toLowerCase() === 'nitheesh8797@gmail.com';
   const planExpiryDate = shopOwner?.plan_expires_at ? new Date(shopOwner.plan_expires_at) : null;
   const now = new Date();
-  const activeDaysLeft = planExpiryDate 
-    ? Math.max(0, Math.ceil((planExpiryDate - now) / (1000 * 60 * 60 * 24)))
-    : (!isPaidUser ? 1 : 30);
-  const formattedExpiry = planExpiryDate 
-    ? planExpiryDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-    : 'N/A';
+  const isPaidUser = isDevUser || (paidPlansList.includes(currentPlanType) && shopOwner?.status === 'APPROVED' && (!planExpiryDate || planExpiryDate > now));
+  const activeDaysLeft = isDevUser 
+    ? 9999 
+    : (planExpiryDate ? Math.max(0, Math.ceil((planExpiryDate - now) / (1000 * 60 * 60 * 24))) : 0);
+  const formattedExpiry = isDevUser
+    ? 'Lifetime Active'
+    : (planExpiryDate ? planExpiryDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Payment Pending');
 
   // Force light mode on document root while PlanSelectionScreen is active
   useEffect(() => {
@@ -116,55 +115,23 @@ export default function PlanSelectionScreen({ shopOwner, onPlanSelected, isModal
     });
   }
 
-  const [startingTrial, setStartingTrial] = useState(false);
-
-  async function handleStartTrial() {
-    setStartingTrial(true);
-    try {
-      const email = shopOwner?.email || localStorage.getItem('knite_last_email');
-      const res = await fetch(`${cloudUrl}/api/auth/start-trial`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to activate free trial');
-      }
-      if (data.token) {
-        localStorage.setItem('knite_auth_token', data.token);
-      }
-      onPlanSelected({
-        plan_type: 'cloud_799',
-        billing_cycle: 'trial',
-        status: 'APPROVED',
-        is_trial: true,
-        plan_expires_at: data.tenant?.plan_expires_at || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-      });
-    } catch (err) {
-      alert(err.message || 'Could not start 1-day free trial.');
-    } finally {
-      setStartingTrial(false);
-    }
-  }
-
   function getAmount(plan) {
-    return billing === 'yearly' ? plan.yearlyBase : plan.monthlyBase;
+    return plan?.monthlyBase || 900;
   }
 
-  function getGatewayFeeBreakdown(baseAmount) {
-    // Razorpay Convenience Gateway Fee: 2% of base
-    const fee = parseFloat((baseAmount * 0.019666).toFixed(2)); // e.g. 11.78 for 599
-    // GST on Gateway Fee: 18% of fee
-    const gst = parseFloat((fee * 0.18).toFixed(2));             // e.g. 2.12 for 599
-    const totalSurcharge = parseFloat((fee + gst).toFixed(2));   // e.g. 13.90 for 599
-    return { fee, gst, totalSurcharge };
+  function getGatewayFeeBreakdown(baseAmount = 900) {
+    // Razorpay Standard: 2% fee + 18% GST on the fee = 2.36% effective rate
+    // Total payable = 900 / (1 - 0.0236) = 921.75 => ₹922
+    // Surcharge = ₹22 (18.64 fee + 3.36 GST), Net received = ₹900
+    const fee = 18.64;
+    const gst = 3.36;
+    const totalSurcharge = 22.00;
+    const totalPayable = 922.00;
+    return { fee, gst, totalSurcharge, totalPayable };
   }
 
   function getTotal(plan) {
-    const base = getAmount(plan);
-    const { totalSurcharge } = getGatewayFeeBreakdown(base);
-    return parseFloat((base + totalSurcharge).toFixed(2));
+    return 922.00;
   }
 
   function handleSelectPlan(plan) {
@@ -365,10 +332,10 @@ export default function PlanSelectionScreen({ shopOwner, onPlanSelected, isModal
   const btnBack = 'py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition bg-slate-100 text-slate-700 hover:bg-slate-200';
 
   const content = (
-    <div className={`w-full max-w-5xl flex flex-col items-center justify-start ${isModal ? 'p-2 sm:p-4' : 'min-h-screen px-3 sm:px-4 py-6 sm:py-8 bg-gradient-to-br from-slate-50 via-blue-50/40 to-indigo-50/40'}`}>
+    <div className={`w-full max-w-4xl mx-auto flex flex-col items-center justify-center ${isModal ? 'p-2 sm:p-4' : 'py-6 sm:py-10'}`}>
 
       {/* Header — With close button if modal */}
-      <div className="w-full max-w-5xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
+      <div className="w-full max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
         <div className="flex items-center gap-3">
           <div className="p-1 rounded-2xl bg-white border border-slate-200 shadow-md flex items-center justify-center shrink-0">
             <img src="/logo_icon.png" alt="Knite Medico Logo" className="w-12 sm:w-14 h-12 sm:h-14 object-contain drop-shadow-xs" />
@@ -395,11 +362,11 @@ export default function PlanSelectionScreen({ shopOwner, onPlanSelected, isModal
 
       {/* ── STEP 1: PLANS ── */}
       {step === 'plans' && (
-        <div className="w-full max-w-5xl">
+        <div className="w-full max-w-4xl mx-auto">
           <div className="text-center mb-6">
-            <h2 className="text-3xl font-black text-slate-900 mb-2">Select & Manage SaaS Subscription</h2>
-            <p className="text-slate-600 font-medium text-sm">
-              Instant Active Subscription • Monthly AutoPay & Annual Discount • Official GST Tax Invoice
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2">Pharmacy SaaS Subscription</h2>
+            <p className="text-slate-600 font-medium text-xs sm:text-sm">
+              ₹900/month per pharmacy • Instant Activation • Official GST Tax Invoice
             </p>
           </div>
 
@@ -412,48 +379,37 @@ export default function PlanSelectionScreen({ shopOwner, onPlanSelected, isModal
               <div>
                 <div className="flex items-center gap-2">
                   <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
-                    isPaidUser 
-                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
-                      : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                    isDevUser
+                      ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                      : isPaidUser 
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
+                        : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
                   }`}>
-                    {isPaidUser ? 'Active Subscription' : 'Free Trial'}
+                    {isDevUser ? 'Developer Whitelist' : (isPaidUser ? 'Active Subscription' : 'Payment Required')}
                   </span>
                   {shopOwner?.license_key && (
                     <span className="text-[11px] font-mono text-slate-400">Key: {shopOwner.license_key}</span>
                   )}
                 </div>
                 <h4 className="text-lg font-black mt-1">
-                  {isPaidUser ? 'All-In-One Cloud SaaS (₹799/mo)' : '1-Day Free Trial'}
+                  {isDevUser ? 'Master Developer License' : (isPaidUser ? 'KNITE Medico Cloud SaaS (₹900/mo)' : 'Subscription Inactive')}
                 </h4>
                 <p className="text-xs text-slate-300 mt-0.5">
-                  {isPaidUser ? `Valid & active until ${formattedExpiry}` : 'Full access to POS Billing, Cloud Sync, and WhatsApp Dispatch'}
+                  {isDevUser 
+                    ? 'Unrestricted lifetime developer access'
+                    : (isPaidUser ? `Valid & active until ${formattedExpiry}` : 'Payment required to activate your pharmacy terminal & POS billing')}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3 shrink-0">
               <div className="text-right">
-                <span className="text-2xl font-black text-amber-400 block">{activeDaysLeft} Days</span>
-                <span className="text-[11px] text-slate-400 font-bold">Remaining in Plan</span>
+                <span className="text-2xl font-black text-amber-400 block">
+                  {isDevUser ? 'Lifetime' : (isPaidUser ? `${activeDaysLeft} Days` : '0 Days')}
+                </span>
+                <span className="text-[11px] text-slate-400 font-bold">
+                  {isDevUser ? 'Unlimited' : (isPaidUser ? 'Remaining in Plan' : 'Pay to Activate')}
+                </span>
               </div>
-            </div>
-          </div>
-
-          {/* Monthly / Yearly Toggle */}
-          <div className="flex justify-center mb-8">
-            <div className="flex rounded-2xl border border-slate-200 bg-slate-100 p-1.5 gap-1.5 shadow-inner">
-              <button
-                onClick={() => setBilling('monthly')}
-                className={`px-6 py-2.5 rounded-xl text-xs font-black transition ${billing === 'monthly' ? 'bg-[#ff2c2c] text-white shadow-md shadow-[#ff2c2c]/30' : 'text-slate-600 hover:text-slate-900'}`}
-              >
-                Monthly Billing
-              </button>
-              <button
-                onClick={() => setBilling('yearly')}
-                className={`px-6 py-2.5 rounded-xl text-xs font-black transition flex items-center gap-2 ${billing === 'yearly' ? 'bg-[#ff2c2c] text-white shadow-md shadow-[#ff2c2c]/30' : 'text-slate-600 hover:text-slate-900'}`}
-              >
-                Yearly Billing
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500 text-white font-black">Save 20%</span>
-              </button>
             </div>
           </div>
 
@@ -461,8 +417,8 @@ export default function PlanSelectionScreen({ shopOwner, onPlanSelected, isModal
           <div className="max-w-2xl mx-auto mb-8">
             {PLANS.map(plan => {
               const Icon = plan.icon;
-              const base = billing === 'yearly' ? plan.yearlyBase : plan.monthlyBase;
-              const monthlyEq = billing === 'yearly' ? plan.yearlyMonthly : plan.monthlyBase;
+              const base = plan.monthlyBase; // 900
+              const { totalSurcharge, totalPayable } = getGatewayFeeBreakdown(base);
 
               return (
                 <div key={plan.id}
@@ -482,12 +438,12 @@ export default function PlanSelectionScreen({ shopOwner, onPlanSelected, isModal
 
                       <div className="mt-5 flex items-baseline gap-2">
                         <span className="text-4xl sm:text-5xl font-black">₹{base.toLocaleString('en-IN')}</span>
-                        <span className="text-sm opacity-80 font-bold">{billing === 'yearly' ? '/year' : '/month'}</span>
+                        <span className="text-sm opacity-80 font-bold">/month</span>
                       </div>
-                      <div className="mt-1 text-xs opacity-90">
-                        {billing === 'yearly' && (
-                          <p className="text-emerald-300 font-bold">≈ ₹{monthlyEq}/month • Save ₹{(plan.monthlyBase * 12 - plan.yearlyBase).toLocaleString('en-IN')}</p>
-                        )}
+                      <div className="mt-2 text-xs">
+                        <span className="px-2.5 py-1 rounded-md bg-white/15 text-rose-200 font-semibold inline-block">
+                          + ₹{totalSurcharge.toFixed(0)} Razorpay gateway fee (Total: ₹{totalPayable.toFixed(0)}/mo)
+                        </span>
                       </div>
                       <p className="text-xs opacity-80 mt-2 font-medium">✓ Instant Active Service • 1-Day Grace Period • Razorpay Secure</p>
                     </div>
@@ -509,7 +465,7 @@ export default function PlanSelectionScreen({ shopOwner, onPlanSelected, isModal
                         onClick={() => handleSelectPlan(plan)}
                         className="w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 bg-gradient-to-r from-[#ff2c2c] to-[#f94449] text-white hover:shadow-xl hover:shadow-[#ff2c2c]/30 transition"
                       >
-                        <Zap className="w-5 h-5" /> Subscribe via Razorpay (₹{base.toLocaleString('en-IN')}{billing === 'yearly' ? '/yr' : '/mo'})
+                        <Zap className="w-5 h-5" /> Subscribe via Razorpay (₹{totalPayable.toFixed(0)}/month)
                       </button>
                     </div>
                   </div>
@@ -687,7 +643,7 @@ export default function PlanSelectionScreen({ shopOwner, onPlanSelected, isModal
             {[
               ['1. Subscription & Automatic Activation', `KNITE Medico ${selectedPlan.name} is ₹${getTotal(selectedPlan).toLocaleString('en-IN')} per ${billing === 'yearly' ? 'year' : 'month'}. Payment grants instant software activation with zero delay.`],
               ['2. Payment Gateway & AutoPay Mandates', 'By subscribing, you authorize KNITE Infotech to process payments via Razorpay Gateway. Invoices are dispatched to your email from kniteinfotech@gmail.com.'],
-              ['3. Plan Features & Gating', 'Basic POS Billing (₹599) includes local offline billing and GST receipts. Pro Cloud (₹799) includes continuous Cloud Sync, WhatsApp automated billing, and clinical medicine descriptions.'],
+              ['3. Plan Features & Gating', 'All-In-One Cloud SaaS (₹900/month) includes continuous Neon Cloud Sync, WhatsApp automated billing, medicine expiry tracking, and clinical medicine descriptions.'],
               ['4. Cancellation & Data Security', 'Cancel anytime from settings. No pro-rated refunds for current active cycle. Local offline POS data remains on your computer permanently.'],
               ['5. Official Invoicing', 'Tax invoice for every payment is automatically transmitted to your registered email from kniteinfotech@gmail.com.']
             ].map(([title, text]) => (
@@ -849,7 +805,7 @@ export default function PlanSelectionScreen({ shopOwner, onPlanSelected, isModal
               { bg: 'bg-blue-100', icon: CreditCard, color: 'text-blue-700', title: 'Razorpay Gateway Verified', sub: `Payment ID: ${utrInput || 'RAZORPAY_SUCCESS'}` },
               { bg: 'bg-indigo-100', icon: Repeat, color: 'text-indigo-700', title: 'AutoPay Mandate', sub: autoPay ? 'Active — debits monthly without manual intervention' : 'Manual renewal on expiry' },
               { bg: 'bg-emerald-100', icon: Shield, color: 'text-emerald-700', title: 'Invoice Sent to Email', sub: 'Tax invoice dispatched from kniteinfotech@gmail.com' },
-              { bg: 'bg-sky-100', icon: Cloud, color: 'text-sky-700', title: selectedPlan.id === 'cloud_799' || selectedPlan.id === 'enterprise_1299' ? 'Cloud Sync & WhatsApp Active' : 'Local Storage Active', sub: selectedPlan.id === 'cloud_799' ? 'Syncs automatically every 45 seconds + WhatsApp enabled' : 'Data stored securely on your local device' },
+              { bg: 'bg-sky-100', icon: Cloud, color: 'text-sky-700', title: 'Neon Cloud Sync & WhatsApp Active', sub: 'Syncs automatically + WhatsApp billing enabled' },
             ].map(({ bg, icon: Icon, color, title, sub }) => (
               <div key={title} className="flex items-center gap-3">
                 <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center shrink-0`}>
@@ -884,12 +840,16 @@ export default function PlanSelectionScreen({ shopOwner, onPlanSelected, isModal
   if (isModal) {
     return (
       <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-fadeIn">
-        <div className="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl p-4 sm:p-6 overflow-hidden max-h-[90vh] overflow-y-auto">
+        <div className="relative w-full max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl p-4 sm:p-6 overflow-hidden max-h-[90vh] overflow-y-auto">
           {content}
         </div>
       </div>
     );
   }
 
-  return content;
+  return (
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/40 to-indigo-50/40 px-3 sm:px-6 py-8">
+      {content}
+    </div>
+  );
 }

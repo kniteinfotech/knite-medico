@@ -56,7 +56,7 @@ export default function POSBilling({ onSaleComplete, theme, onOpenWhatsAppModal 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const isDevUser = (storeInfo?.email || '').toLowerCase() === 'nitheesh8797@gmail.com';
-  const has799Plan = isDevUser || storeInfo?.plan_type === 'cloud_799' || storeInfo?.plan_type === 'pro_cloud' || storeInfo?.plan_type === 'enterprise';
+  const has799Plan = isDevUser || storeInfo?.plan_type === 'cloud_900' || storeInfo?.plan_type === 'cloud_799' || storeInfo?.plan_type === 'pro_cloud' || storeInfo?.plan_type === 'enterprise';
   const [waLinkAlert, setWaLinkAlert] = useState(null); // Alert when device is not linked
   const [activeReceipt, setActiveReceipt] = useState(null);
   const [showUPISimulator, setShowUPISimulator] = useState(false);

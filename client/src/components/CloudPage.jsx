@@ -99,7 +99,7 @@ export default function CloudPage({ theme, onSyncSuccess }) {
   const isDark = theme === 'dark';
   const isLoggedIn = !!(authToken && cloudTenant);
   const isLifetime = cloudTenant?.plan_expires_at && new Date(cloudTenant.plan_expires_at).getFullYear() > 2100;
-  const isProCloud = cloudTenant?.plan_type === 'pro_cloud' || cloudTenant?.plan_type === 'cloud_799' || cloudTenant?.plan_type === 'enterprise';
+  const isProCloud = cloudTenant?.plan_type === 'cloud_900' || cloudTenant?.plan_type === 'pro_cloud' || cloudTenant?.plan_type === 'cloud_799' || cloudTenant?.plan_type === 'enterprise';
 
   // Load local profile & check online
   useEffect(() => {

@@ -227,7 +227,7 @@ export default function AuthScreen({ onAuthSuccess, onOpenSuperAdmin, theme }) {
         localStorage.setItem('knite_auth_token', data.token);
         localStorage.setItem('knite_last_email', loginEmail);
         sessionStorage.setItem('knite_session_active', 'true');
-        const paidPlans = ['pro_cloud', 'cloud_799', 'pos_599', 'local_599', 'pos_basic', 'enterprise', 'enterprise_1299', 'enterprise_1499'];
+        const paidPlans = ['cloud_900', 'pro_cloud', 'cloud_799', 'pos_599', 'local_599', 'pos_basic', 'enterprise', 'enterprise_1299', 'enterprise_1499'];
         const isPaid = paidPlans.includes(data.tenant.plan_type);
         const ownerProfile = {
           id: data.tenant.id,
@@ -400,7 +400,7 @@ export default function AuthScreen({ onAuthSuccess, onOpenSuperAdmin, theme }) {
           gstin: gstin.trim(),
           address: address.trim(),
           otp_code: isDev ? undefined : otpCode.trim(),
-          plan_type: 'cloud_799'
+          plan_type: 'cloud_900'
         })
       });
 
@@ -411,7 +411,7 @@ export default function AuthScreen({ onAuthSuccess, onOpenSuperAdmin, theme }) {
       }
 
       if (data.token) {
-        // Automatic login with 1-Day Free Trial (or developer lifetime access)
+        const isPaid = isDev || (data.tenant?.status === 'APPROVED' && data.tenant?.plan_expires_at && new Date(data.tenant.plan_expires_at) > new Date());
         const ownerProfile = {
           id: data.tenant?.id,
           shop_name: data.tenant?.shop_name || shopName.trim(),
@@ -421,10 +421,10 @@ export default function AuthScreen({ onAuthSuccess, onOpenSuperAdmin, theme }) {
           dl_number: dlNumber.trim(),
           gstin: gstin.trim(),
           address: address.trim(),
-          license_key: data.tenant?.license_key || 'TRIAL_ACTIVE',
-          plan_type: data.tenant?.plan_type || 'cloud_799',
-          status: 'APPROVED',
-          is_trial: Boolean(data.tenant?.is_trial ?? data.isTrial ?? true),
+          license_key: data.tenant?.license_key || 'PENDING_PAYMENT',
+          plan_type: data.tenant?.plan_type || 'cloud_900',
+          status: isPaid ? 'APPROVED' : 'PENDING_PAYMENT',
+          is_trial: false,
           plan_expires_at: data.tenant?.plan_expires_at
         };
         sessionStorage.setItem('knite_session_active', 'true');
@@ -432,8 +432,9 @@ export default function AuthScreen({ onAuthSuccess, onOpenSuperAdmin, theme }) {
         localStorage.setItem('knite_auth_token', data.token);
         localStorage.setItem('knite_last_email', cleanEmail);
         await db.settings.put({ key: 'store_profile', ...ownerProfile });
-        // false: enter directly into dashboard with 1-Day Trial active!
-        if (onAuthSuccess) onAuthSuccess(ownerProfile, false);
+        
+        // If not developer and payment required: show payment plan screen immediately!
+        if (onAuthSuccess) onAuthSuccess(ownerProfile, !isPaid);
         return;
       }
 
@@ -973,7 +974,7 @@ export default function AuthScreen({ onAuthSuccess, onOpenSuperAdmin, theme }) {
                     >
                       Terms & Conditions
                     </button>
-                    {' '}and understand that after my 1-day free trial, subscription renewal is ₹599 or ₹799/mo.
+                    {' '}and understand that subscription renewal is ₹900/month (+ payment gateway fee).
                   </p>
                 </div>
 
@@ -1043,7 +1044,7 @@ export default function AuthScreen({ onAuthSuccess, onOpenSuperAdmin, theme }) {
             <div className="overflow-y-auto p-5 text-xs leading-relaxed text-slate-700 space-y-4">
               {[
                 ['1. Service Provider', 'KNITE Medico is a SaaS product owned and operated by KNITE Infotech, Chennai, Tamil Nadu, India.'],
-                ['2. Subscription & Payments', 'Subscription fee is ₹799/month for All-In-One Cloud SaaS, paid directly to KNITE Infotech via Razorpay Payment Gateway. All payments are final for the active billing period.'],
+                ['2. Subscription & Payments', 'Subscription fee is ₹900/month for All-In-One Cloud SaaS (+ payment gateway fee, total ₹922/month), paid directly to KNITE Infotech via Razorpay Payment Gateway. All payments are final for the active billing period.'],
                 ['3. Payment Gateway Authorization', 'By subscribing, you authorize KNITE Infotech to collect subscription fees monthly via Razorpay Gateway (UPI, AutoPay, Credit/Debit Cards, Netbanking).'],
                 ['4. Drug License Verification', 'New pharmacies must submit a valid Drug License (DL) for verification. KNITE Infotech reserves the right to deny access to pharmacies that fail statutory compliance checks.'],
                 ['5. Expiry & Grace Period', 'Upon monthly subscription expiry, a 1-day (24-hour) grace period is provided. After the grace period, cloud services are suspended until monthly payment is renewed.'],

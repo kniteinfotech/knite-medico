@@ -189,7 +189,7 @@ router.post('/verify-payment', async (req, res) => {
     if (recipientEmail) {
       try {
         const emailService = require('../services/emailService');
-        const planAmount = (plan === 'enterprise_1299' || plan === 'enterprise') ? 1299 : ((plan === 'cloud_799' || plan === 'cloud' || plan === 'pro_cloud') ? 799 : 599);
+        const planAmount = (plan === 'cloud_900') ? 900 : ((plan === 'enterprise_1299' || plan === 'enterprise') ? 1299 : ((plan === 'cloud_799' || plan === 'cloud' || plan === 'pro_cloud') ? 799 : 599));
         await emailService.sendPaymentInvoice({
           recipient_email: recipientEmail,
           shop_name: targetShopName || 'Medical Store',
@@ -343,7 +343,7 @@ router.post('/verify-manual', async (req, res) => {
   if (recipientEmail) {
     try {
       const emailService = require('../services/emailService');
-      const planAmount = (plan === 'enterprise_1299' || plan === 'enterprise') ? 1299 : ((plan === 'cloud_799' || plan === 'cloud' || plan === 'pro_cloud') ? 799 : 599);
+      const planAmount = (plan === 'cloud_900') ? 900 : ((plan === 'enterprise_1299' || plan === 'enterprise') ? 1299 : ((plan === 'cloud_799' || plan === 'cloud' || plan === 'pro_cloud') ? 799 : 599));
       await emailService.sendPaymentInvoice({
         recipient_email: recipientEmail,
         shop_name: targetShopName || 'Medical Store',

@@ -243,7 +243,7 @@ export default function App() {
             onClick={() => setShowPlanSelection(true)}
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#ff2c2c] to-[#f94449] text-white font-black text-base flex items-center justify-center gap-2 hover:shadow-xl hover:shadow-[#ff2c2c]/40 transition mb-4"
           >
-            💳 Pay via Razorpay (₹799/month)
+            💳 Pay via Razorpay (₹922/month)
           </button>
           <button
             onClick={handleLogout}
@@ -305,7 +305,7 @@ export default function App() {
         {(() => {
           const hasCloudToken = !!(localStorage.getItem('knite_auth_token'));
           const planType = shopOwner?.plan_type || 'free_local';
-          const isCloudPlan = planType === 'pro_cloud' || planType === 'cloud_799' || planType === 'cloud' || planType === 'enterprise' || planType === 'enterprise_1299' || isDevUser;
+          const isCloudPlan = planType === 'cloud_900' || planType === 'pro_cloud' || planType === 'cloud_799' || planType === 'cloud' || planType === 'enterprise' || planType === 'enterprise_1299' || isDevUser;
           const isLocalOnlyUser = !isCloudPlan || !hasCloudToken;
           if (!isLocalOnlyUser) return null;
           return (

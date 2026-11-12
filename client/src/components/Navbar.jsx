@@ -81,7 +81,7 @@ export default function Navbar({
     setIsSyncing(false);
   }
 
-  const paidPlans = ['pro_cloud', 'cloud_799', 'pos_599', 'local_599', 'pos_basic', 'enterprise', 'enterprise_1299', 'enterprise_1499'];
+  const paidPlans = ['cloud_900', 'pro_cloud', 'cloud_799', 'pos_599', 'local_599', 'pos_basic', 'enterprise', 'enterprise_1299', 'enterprise_1499'];
   const userPlan = shopOwner?.plan_type || 'trial';
   const isPaidPlan = paidPlans.includes(userPlan);
   const isTrial = !isPaidPlan;

@@ -5,12 +5,13 @@ const path = require('path');
 
 const SENDER_EMAIL = process.env.SMTP_USER || 'kniteinfotech@gmail.com';
 const SENDER_NAME = 'KNITE Medico';
+const DEFAULT_GMAIL_APP_PASS = 'prxhwciaajxqbnog';
 
 // Create Nodemailer Transporter
 let transporter = null;
 
 function isEmailConfigured() {
-  const pass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || '';
+  const pass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || DEFAULT_GMAIL_APP_PASS;
   return Boolean(pass && pass.trim());
 }
 
@@ -22,12 +23,12 @@ function getTransporter() {
   if (transporter) return transporter;
 
   const user = process.env.SMTP_USER || 'kniteinfotech@gmail.com';
-  const pass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || '';
-  const host = process.env.SMTP_HOST || '';
-  const port = process.env.SMTP_PORT || 465;
+  const pass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || DEFAULT_GMAIL_APP_PASS;
+  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const port = process.env.SMTP_PORT || 587;
 
   if (pass) {
-    if (host) {
+    if (host && host !== 'smtp.gmail.com') {
       transporter = nodemailer.createTransport({
         host,
         port: parseInt(port, 10),
