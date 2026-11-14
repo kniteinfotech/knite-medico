@@ -29,10 +29,10 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Android Build Tools 36.1.0
+      - name: Install Android Platform 36 and Build Tools 36.1.0
         run: |
           yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "build-tools;36.1.0" "platforms;android-34"
+          ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "build-tools;36.1.0" "platforms;android-36"
 
       - name: Configure Bubblewrap
         run: |
@@ -64,6 +64,7 @@ jobs:
         working-directory: ./android
         run: |
           bubblewrap update --skipVersionUpgrade
+          chmod +x gradlew
 
       - name: Build Signed APK and AAB Bundle
         working-directory: ./android
