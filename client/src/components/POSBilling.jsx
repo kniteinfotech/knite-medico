@@ -30,6 +30,7 @@ import { getCloudUrl } from '../utils/cloudConfig';
 import { useLanguage } from '../i18n/languageContext';
 import ThermalReceipt from './ThermalReceipt';
 import PhonePeModal from './PhonePeModal';
+import { checkAndNotifyLowStock } from '../utils/stockAlerts';
 
 export default function POSBilling({ onSaleComplete, theme, onOpenWhatsAppModal }) {
   const { language, whatsappLanguage, setWhatsappLanguage, availableLanguages, t } = useLanguage();
@@ -408,6 +409,9 @@ export default function POSBilling({ onSaleComplete, theme, onOpenWhatsAppModal 
           });
         }
       }
+
+      // Check remaining stock and fire system on-screen notification if any items hit low stock
+      checkAndNotifyLowStock(true).catch(() => {});
 
       // 2.5 Save/Update customer record in Dexie
       const cName = customerName.trim();

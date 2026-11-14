@@ -15,6 +15,7 @@ import PrivacyPolicyPage from './components/PrivacyPolicyPage';
 import { seedInitialDataIfEmpty, db } from './db/localDb';
 import { SyncService } from './services/syncService';
 import { WifiOff, RefreshCw } from 'lucide-react';
+import { checkAndNotifyLowStock } from './utils/stockAlerts';
 
 export default function App() {
   const [shopOwner, setShopOwner] = useState(null);
@@ -87,6 +88,21 @@ export default function App() {
       window.removeEventListener('hashchange', handleLocationCheck);
     };
   }, []);
+
+  // Periodic low stock monitor for on-screen push notifications on Apple and Android
+  useEffect(() => {
+    if (!shopOwner) return;
+    const timer = setTimeout(() => {
+      checkAndNotifyLowStock().catch(() => {});
+    }, 4000);
+    const interval = setInterval(() => {
+      checkAndNotifyLowStock().catch(() => {});
+    }, 5 * 60 * 1000);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
+  }, [shopOwner]);
 
   // Check shop owner login status on boot (requires active session so new visits go to login page first)
   useEffect(() => {
