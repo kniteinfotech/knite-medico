@@ -81,3 +81,50 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// 4. Web Push Notifications (Supported on iOS 16.4+ Home Screen, Android, and Desktop)
+self.addEventListener('push', (event) => {
+  let data = { title: 'KNITE Medico', body: 'New update from KNITE Medico' };
+  try {
+    if (event.data) {
+      data = event.data.json();
+    }
+  } catch (e) {
+    if (event.data) {
+      data.body = event.data.text();
+    }
+  }
+
+  const options = {
+    body: data.body || 'New notification',
+    icon: '/logo_icon.png',
+    badge: '/favicon.png',
+    vibrate: [100, 50, 100],
+    data: {
+      url: data.url || '/'
+    }
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'KNITE Medico', options)
+  );
+});
+
+// 5. Notification Click Handler
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const urlToOpen = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (let client of windowClients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});
