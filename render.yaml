@@ -24,11 +24,15 @@ services:
       - key: SMTP_USER
         value: kniteinfotech@gmail.com
       - key: GMAIL_APP_PASSWORD
-        value: prxhwciaajxqbnog
+        sync: false
       - key: SMTP_PASS
-        value: prxhwciaajxqbnog
+        sync: false
       - key: TELEGRAM_BOT_TOKEN
-        value: 8884944758:AAG4mfMMCSbwiriE3s_s0fBhKJaxMcxV_aI
+        sync: false
       - key: TELEGRAM_CHAT_ID
-        value: "6603754999"
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
 
