@@ -257,44 +257,48 @@ export default function Navbar({
             <div className="relative" ref={langMenuRef}>
               <button
                 onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-black transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-black transition-all ${
                   isDark 
                     ? 'bg-[#1d1215] border-rose-900/40 text-rose-200 hover:bg-[#2b171c]' 
-                    : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100 shadow-sm'
+                    : 'bg-white border-slate-300 text-slate-900 hover:bg-slate-100 shadow-sm'
                 }`}
                 title="Change Language"
               >
                 <Languages className="w-3.5 h-3.5 text-[#ff2c2c]" />
-                <span className="text-[11px] font-extrabold uppercase">{currentLangObj.code}</span>
+                <span className="text-xs font-extrabold uppercase text-slate-900 dark:text-rose-200">{currentLangObj.code}</span>
               </button>
 
               {isLangMenuOpen && (
-                <div className={`absolute right-0 mt-2 w-48 rounded-2xl border shadow-xl p-1.5 z-50 ${
-                  isDark ? 'bg-[#181115] border-rose-950/80 text-white shadow-2xl' : 'bg-white border-slate-200 text-slate-800 shadow-xl'
+                <div className={`absolute right-0 mt-2 w-52 rounded-2xl border shadow-2xl p-2 z-50 ${
+                  isDark ? 'bg-[#181115] border-rose-900/70 text-white shadow-2xl' : 'bg-white border-slate-300 text-slate-900 shadow-2xl'
                 }`}>
-                  <div className="px-2 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400">
-                    Select Language
+                  <div className="px-2 py-1 text-[11px] font-black uppercase tracking-wider text-slate-900 dark:text-slate-200 flex items-center justify-between border-b border-slate-200 dark:border-rose-950/60 pb-1.5 mb-1">
+                    <span>Select Language</span>
+                    <Languages className="w-3.5 h-3.5 text-[#ff2c2c]" />
                   </div>
-                  {availableLanguages.map(l => (
-                    <button
-                      key={l.code}
-                      onClick={() => {
-                        setLanguage(l.code);
-                        setIsLangMenuOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-bold transition ${
-                        language === l.code
-                          ? 'bg-gradient-to-r from-[#ff2c2c] to-[#f94449] text-white shadow-sm'
-                          : isDark ? 'hover:bg-rose-950/40 text-slate-200' : 'hover:bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <span className="text-base">{l.flag}</span>
-                        <span>{l.nativeName}</span>
-                      </span>
-                      {language === l.code && <Check className="w-3.5 h-3.5" />}
-                    </button>
-                  ))}
+                  <div className="space-y-1">
+                    {availableLanguages.map(l => (
+                      <button
+                        key={l.code}
+                        onClick={() => {
+                          setLanguage(l.code);
+                          setIsLangMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-black transition ${
+                          language === l.code
+                            ? 'bg-gradient-to-r from-[#ff2c2c] to-[#f94449] text-white shadow-sm'
+                            : isDark ? 'hover:bg-rose-950/60 text-white' : 'hover:bg-slate-100 text-slate-900'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="text-base">{l.flag}</span>
+                          <span className="font-extrabold text-slate-900 dark:text-white">{l.label}</span>
+                          <span className="text-[10px] text-slate-600 dark:text-slate-300 font-medium">({l.nativeName})</span>
+                        </span>
+                        {language === l.code && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -503,21 +507,34 @@ export default function Navbar({
               </div>
 
               {/* Multilingual Selector */}
-              <div className="pt-2 border-t border-slate-200 dark:border-rose-950/60">
-                <p className="text-[11px] font-black uppercase text-slate-400 mb-2">App Language</p>
-                <div className="grid grid-cols-2 gap-1.5">
+              <div className="pt-3 border-t border-slate-200 dark:border-rose-950/60">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                    <Languages className="w-4 h-4 text-[#ff2c2c]" />
+                    <span>App Language</span>
+                  </p>
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-500/10 text-[#ff2c2c] border border-rose-500/20">
+                    Multilingual
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
                   {availableLanguages.map(l => (
                     <button
                       key={l.code}
                       onClick={() => setLanguage(l.code)}
-                      className={`p-2 rounded-xl text-xs font-bold flex items-center justify-between transition ${
+                      className={`p-2.5 rounded-xl text-xs font-black flex items-center justify-between transition border ${
                         language === l.code 
-                          ? 'bg-[#ff2c2c] text-white shadow-sm' 
-                          : isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700'
+                          ? 'bg-gradient-to-r from-[#ff2c2c] to-[#f94449] text-white border-transparent shadow-md shadow-red-500/20' 
+                          : isDark 
+                            ? 'bg-slate-800 text-white border-slate-700 hover:bg-slate-700' 
+                            : 'bg-white text-slate-900 border-slate-300 hover:bg-slate-100 shadow-xs'
                       }`}
                     >
-                      <span>{l.flag} {l.name}</span>
-                      {language === l.code && <Check className="w-3.5 h-3.5" />}
+                      <span className="flex items-center gap-1.5 truncate">
+                        <span className="text-base shrink-0">{l.flag}</span>
+                        <span className="truncate text-slate-900 dark:text-white font-extrabold">{l.label}</span>
+                      </span>
+                      {language === l.code && <Check className="w-3.5 h-3.5 shrink-0 text-white stroke-[3]" />}
                     </button>
                   ))}
                 </div>

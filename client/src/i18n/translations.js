@@ -1,8 +1,8 @@
 export const LANGUAGES = [
-  { code: 'en', label: 'English', nativeName: 'English', flag: '🇬🇧' },
-  { code: 'ta', label: 'Tamil', nativeName: 'தமிழ்', flag: '🇮🇳' },
-  { code: 'ml', label: 'Malayalam', nativeName: 'മലയാളം', flag: '🇮🇳' },
-  { code: 'hi', label: 'Hindi', nativeName: 'हिन्दी', flag: '🇮🇳' },
+  { code: 'en', name: 'English', label: 'English', nativeName: 'English', flag: '🇬🇧' },
+  { code: 'ta', name: 'Tamil', label: 'Tamil', nativeName: 'தமிழ்', flag: '🇮🇳' },
+  { code: 'ml', name: 'Malayalam', label: 'Malayalam', nativeName: 'മലയാളം', flag: '🇮🇳' },
+  { code: 'hi', name: 'Hindi', label: 'Hindi', nativeName: 'हिन्दी', flag: '🇮🇳' },
 ];
 
 export const translations = {

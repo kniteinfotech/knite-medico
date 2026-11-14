@@ -326,8 +326,8 @@ export default function WhatsAppSetupModal({ isOpen, onClose, onSave, theme }) {
                           : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                       }`}
                     >
-                      <div>{l.name}</div>
-                      <div className="text-[10px] opacity-75 font-normal">{l.nativeName}</div>
+                      <div className="font-extrabold">{l.flag} {l.label}</div>
+                      <div className="text-[10px] opacity-80 font-normal">{l.nativeName}</div>
                     </button>
                   ))}
                 </div>
