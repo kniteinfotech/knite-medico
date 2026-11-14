@@ -1,11 +1,12 @@
 name: Build Android APK and AAB Bundle
 
 on:
-  workflow_dispatch: # Allows manual trigger from GitHub UI
+  workflow_dispatch:
   push:
     branches:
       - main
     paths:
+      - 'android/**'
       - 'client/public/manifest.json'
       - '.github/workflows/build-android.yml'
 
@@ -23,25 +24,33 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: 'client/package-lock.json'
 
-      - name: Install Bubblewrap CLI
-        run: npm install -g @bubblewrap/cli
-
-      - name: Initialize Android Project from PWA Manifest
+      - name: Accept Android SDK Licenses
         run: |
-          mkdir -p android-build
-          cd android-build
-          bubblewrap init --manifest="https://knitemedico.kniteinfotech.in/manifest.json" --directory=.
+          yes | sdkmanager --licenses || true
+
+      - name: Configure Bubblewrap Non-Interactive Paths
+        run: |
+          npm install -g @bubblewrap/cli
+          mkdir -p ~/.bubblewrap
+          cat << EOF > ~/.bubblewrap/config.json
+          {
+            "jdkPath": "${JAVA_HOME}",
+            "androidSdkPath": "${ANDROID_HOME}"
+          }
+          EOF
+          echo "Bubblewrap configuration initialized."
 
       - name: Generate Release Keystore
+        working-directory: ./android
         run: |
-          cd android-build
           keytool -genkeypair \
             -v \
             -keystore android.keystore \
@@ -54,18 +63,21 @@ jobs:
             -dname "CN=KNITE Infotech, OU=Software, O=KNITE Infotech, L=Coimbatore, ST=Tamil Nadu, C=IN"
 
       - name: Build Signed APK and AAB Bundle
+        working-directory: ./android
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: "KniteMedicoPass2026!"
+          BUBBLEWRAP_KEY_PASSWORD: "KniteMedicoPass2026!"
         run: |
-          cd android-build
-          bubblewrap build --skipPwaValidation
+          bubblewrap build --manifest=twa-manifest.json --skipPwaValidation
 
-      - name: Upload APK Artifact
+      - name: Upload APK (For Direct Phone Install)
         uses: actions/upload-artifact@v4
         with:
           name: knite-medico-release-apk
-          path: android-build/*.apk
+          path: android/*.apk
 
-      - name: Upload AAB Bundle Artifact (For Google Play Store)
+      - name: Upload AAB Bundle (For Google Play Store)
         uses: actions/upload-artifact@v4
         with:
           name: knite-medico-playstore-aab
-          path: android-build/*.aab
+          path: android/*.aab
