@@ -29,7 +29,12 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Configure Bubblewrap with Native Android SDK
+      - name: Install Android Build Tools 36.1.0
+        run: |
+          yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "build-tools;36.1.0" "platforms;android-34"
+
+      - name: Configure Bubblewrap
         run: |
           npm install -g @bubblewrap/cli
           mkdir -p ~/.bubblewrap
@@ -39,7 +44,6 @@ jobs:
             "androidSdkPath": "${ANDROID_HOME}"
           }
           EOF
-          echo "Bubblewrap configuration initialized successfully:"
           cat ~/.bubblewrap/config.json
 
       - name: Generate Release Keystore
@@ -55,6 +59,11 @@ jobs:
             -storepass "KniteMedicoPass2026!" \
             -keypass "KniteMedicoPass2026!" \
             -dname "CN=KNITE Infotech, OU=Software, O=KNITE Infotech, L=Coimbatore, ST=Tamil Nadu, C=IN"
+
+      - name: Generate Android Project (Zero-Prompt)
+        working-directory: ./android
+        run: |
+          bubblewrap update --skipVersionUpgrade
 
       - name: Build Signed APK and AAB Bundle
         working-directory: ./android
