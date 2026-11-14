@@ -14,6 +14,7 @@ import PlanSelectionScreen from './components/PlanSelectionScreen';
 import PrivacyPolicyPage from './components/PrivacyPolicyPage';
 import { seedInitialDataIfEmpty, db } from './db/localDb';
 import { SyncService } from './services/syncService';
+import { WifiOff, RefreshCw } from 'lucide-react';
 
 export default function App() {
   const [shopOwner, setShopOwner] = useState(null);
@@ -28,6 +29,18 @@ export default function App() {
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [lastSyncResult, setLastSyncResult] = useState(null);
   const [theme, setTheme] = useState(localStorage.getItem('knite_theme') || 'light');
+  const [isOnline, setIsOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+  useEffect(() => {
+    function handleOnline() { setIsOnline(true); }
+    function handleOffline() { setIsOnline(false); }
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
   const [showNotifPrompt, setShowNotifPrompt] = useState(() => {
     return typeof window !== 'undefined' &&
       'Notification' in window &&
@@ -202,6 +215,29 @@ export default function App() {
     return <PrivacyPolicyPage />;
   }
 
+  // Active Internet Requirement: KNITE Medico is a 100% Cloud SaaS platform
+  if (!isOnline) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center font-sans">
+        <div className="w-20 h-20 rounded-3xl bg-rose-500/10 border-2 border-rose-500/30 flex items-center justify-center mb-6 shadow-2xl shadow-rose-500/20">
+          <WifiOff className="w-10 h-10 text-rose-500 animate-pulse" />
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-2">Internet Connection Required</h1>
+        <p className="text-sm text-slate-400 max-w-md mb-8 leading-relaxed">
+          KNITE Medico is an All-In-One Cloud SaaS platform. Please connect to Wi-Fi or mobile data to open your store, sync live inventory, and generate tax invoices.
+        </p>
+        <button
+          onClick={() => setIsOnline(navigator.onLine)}
+          className="px-6 py-3 rounded-2xl bg-[#ff2c2c] hover:bg-red-600 text-white font-extrabold text-sm shadow-lg shadow-red-500/30 transition active:scale-95 flex items-center gap-2"
+        >
+          <RefreshCw className="w-4 h-4" />
+          <span>Check Connection Again</span>
+        </button>
+        <p className="text-[11px] font-mono text-slate-500 mt-8">KNITE Medico Cloud • Online Required</p>
+      </div>
+    );
+  }
+
   // 1. DEDICATED /admin ROUTE (Protected strictly for kniteinfotech@gmail.com)
   // Admin panel is always light-themed — remove dark class while on this route
   if (isAdminRoute) {
@@ -365,39 +401,6 @@ export default function App() {
             </button>
           </div>
         )}
-
-        {/* ⚠️ Local Data Loss Warning — shown to non-cloud users */}
-        {(() => {
-          const hasCloudToken = !!(localStorage.getItem('knite_auth_token'));
-          const planType = shopOwner?.plan_type || 'free_local';
-          const isCloudPlan = planType === 'cloud_900' || planType === 'pro_cloud' || planType === 'cloud_799' || planType === 'cloud' || planType === 'enterprise' || planType === 'enterprise_1299' || isDevUser;
-          const isLocalOnlyUser = !isCloudPlan || !hasCloudToken;
-          if (!isLocalOnlyUser) return null;
-          return (
-            <div className={`mb-4 p-3.5 rounded-2xl border-2 flex flex-col sm:flex-row sm:items-center gap-3 ${
-              theme === 'dark'
-                ? 'bg-amber-950/30 border-amber-700/60 text-amber-200'
-                : 'bg-amber-50 border-amber-400 text-amber-900'
-            }`}>
-              <div className="flex items-start sm:items-center gap-3 flex-1">
-                <span className="text-xl shrink-0">⚠️</span>
-                <div>
-                  <p className="font-black text-sm">Your data is stored locally only — it may be lost!</p>
-                  <p className="text-xs font-semibold mt-0.5 opacity-80">
-                    Local data lives in this browser's IndexedDB. Clearing browser data, reinstalling, or switching browsers will erase all invoices and medicines.
-                    Upgrade to Cloud to secure all your pharmacy data on our 1 TB server — zero data loss guaranteed.
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setActiveTab('cloud')}
-                className="shrink-0 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-black shadow-md hover:shadow-lg transition active:scale-95 whitespace-nowrap"
-              >
-                🔒 Upgrade to Cloud
-              </button>
-            </div>
-          );
-        })()}
 
 
         {activeTab === 'pos' && (

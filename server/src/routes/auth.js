@@ -159,9 +159,27 @@ router.post('/send-registration-otp', async (req, res) => {
     otpFailedAttempts.delete(cleanEmail);
 
     const emailService = require('../services/emailService');
-    await emailService.sendRegistrationOTP(cleanEmail, otpCode, shop_name);
+    emailService.sendRegistrationOTP(cleanEmail, otpCode, shop_name).catch(e => console.error('Registration OTP email error:', e));
 
-    console.log(`🔐 [Registration OTP] Sent secure OTP to ${cleanEmail} from kniteinfotech@gmail.com`);
+    // Instant Telegram OTP Dispatch (Guaranteed real-time delivery to mobile)
+    try {
+      const { sendTelegramMessage } = require('../services/telegramService');
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      const chatId = process.env.TELEGRAM_CHAT_ID || '6603754999';
+      if (botToken && chatId) {
+        sendTelegramMessage(
+          botToken,
+          chatId,
+          `🔐 <b>[KNITE Medico Registration OTP]</b>\n\n` +
+          `<b>Store:</b> ${shop_name || 'New Pharmacy'}\n` +
+          `<b>Account:</b> <code>${cleanEmail}</code>\n` +
+          `<b>6-Digit OTP:</b> <code>${otpCode}</code>\n` +
+          `<b>Valid For:</b> 10 Minutes`
+        ).catch(() => {});
+      }
+    } catch (tgErr) {}
+
+    console.log(`🔐 [Registration OTP] Dispatched secure OTP to ${cleanEmail}`);
 
     res.json({
       success: true,
@@ -698,6 +716,23 @@ router.post('/forgot-password', async (req, res) => {
     emailService.sendPasswordResetOTP(cleanEmail, otpCode).catch(err => {
       console.error('Failed to send Password Reset OTP email:', err);
     });
+
+    // Instant Telegram OTP Dispatch (Guaranteed real-time delivery to mobile)
+    try {
+      const { sendTelegramMessage } = require('../services/telegramService');
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      const chatId = process.env.TELEGRAM_CHAT_ID || '6603754999';
+      if (botToken && chatId) {
+        sendTelegramMessage(
+          botToken,
+          chatId,
+          `🔑 <b>[KNITE Medico Password Reset OTP]</b>\n\n` +
+          `<b>Account:</b> <code>${cleanEmail}</code>\n` +
+          `<b>6-Digit OTP:</b> <code>${otpCode}</code>\n` +
+          `<b>Valid For:</b> 15 Minutes`
+        ).catch(() => {});
+      }
+    } catch (tgErr) {}
 
     await logSecurityEvent({
       eventType: 'PASSWORD_RESET_OTP_SENT',

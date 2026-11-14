@@ -27,4 +27,8 @@ services:
         value: prxhwciaajxqbnog
       - key: SMTP_PASS
         value: prxhwciaajxqbnog
+      - key: TELEGRAM_BOT_TOKEN
+        value: 8884944758:AAG4mfMMCSbwiriE3s_s0fBhKJaxMcxV_aI
+      - key: TELEGRAM_CHAT_ID
+        value: "6603754999"
 

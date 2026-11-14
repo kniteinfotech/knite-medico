@@ -7,8 +7,78 @@ const SENDER_EMAIL = process.env.SMTP_USER || 'kniteinfotech@gmail.com';
 const SENDER_NAME = 'KNITE Medico';
 const DEFAULT_GMAIL_APP_PASS = 'prxhwciaajxqbnog';
 
-// Create Nodemailer Transporter
-let transporter = null;
+// Unified Dispatcher: Prioritize Third-Party APIs (Resend / Brevo) with fallback to SMTP
+async function dispatchMail(mailOptions) {
+  // 1. Third-Party Provider: Resend (HTTPS API - Zero SMTP Port Blocks)
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const { Resend } = require('resend');
+      const resend = new Resend(process.env.RESEND_API_KEY.trim());
+      const fromAddr = process.env.RESEND_FROM || 'KNITE Medico <onboarding@resend.dev>';
+      const res = await resend.emails.send({
+        from: fromAddr,
+        to: Array.isArray(mailOptions.to) ? mailOptions.to : [mailOptions.to],
+        subject: mailOptions.subject,
+        html: mailOptions.html,
+        text: mailOptions.text
+      });
+      if (res.error) throw new Error(res.error.message);
+      console.log(`✅ [EmailService] Dispatched via Resend API: ${res.data?.id}`);
+      return { messageId: res.data?.id, success: true, provider: 'resend' };
+    } catch (err) {
+      console.warn('⚠️ [EmailService] Resend API failed, falling back to SMTP:', err.message);
+    }
+  }
+
+  // 2. Third-Party Provider: Brevo (HTTPS REST API)
+  if (process.env.BREVO_API_KEY) {
+    try {
+      const https = require('https');
+      const payload = JSON.stringify({
+        sender: { name: SENDER_NAME, email: process.env.BREVO_SENDER || SENDER_EMAIL },
+        to: [{ email: mailOptions.to }],
+        subject: mailOptions.subject,
+        htmlContent: mailOptions.html,
+        textContent: mailOptions.text
+      });
+      const brevoRes = await new Promise((resolve, reject) => {
+        const req = https.request({
+          hostname: 'api.brevo.com',
+          port: 443,
+          path: '/v3/smtp/email',
+          method: 'POST',
+          headers: {
+            'api-key': process.env.BREVO_API_KEY.trim(),
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(payload)
+          },
+          timeout: 10000
+        }, (res) => {
+          let data = '';
+          res.on('data', chunk => data += chunk);
+          res.on('end', () => {
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              resolve({ success: true, data });
+            } else {
+              reject(new Error(`Brevo HTTP ${res.statusCode}: ${data}`));
+            }
+          });
+        });
+        req.on('error', reject);
+        req.write(payload);
+        req.end();
+      });
+      console.log(`✅ [EmailService] Dispatched via Brevo API`);
+      return { success: true, provider: 'brevo', result: brevoRes };
+    } catch (err) {
+      console.warn('⚠️ [EmailService] Brevo API failed, falling back to SMTP:', err.message);
+    }
+  }
+
+  // 3. Fallback: Standard SMTP
+  const mailer = getTransporter();
+  return await mailer.sendMail(mailOptions);
+}
 
 function isEmailConfigured() {
   const pass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || DEFAULT_GMAIL_APP_PASS;
@@ -120,8 +190,6 @@ async function sendTestEmail(toEmail) {
  * Send 6-Digit Registration OTP from kniteinfotech@gmail.com
  */
 async function sendRegistrationOTP(toEmail, otpCode, shopName) {
-  const mailer = getTransporter();
-
   const html = `
     <!DOCTYPE html>
     <html>
@@ -166,7 +234,7 @@ async function sendRegistrationOTP(toEmail, otpCode, shopName) {
     </html>
   `;
 
-  return await mailer.sendMail({
+  return await dispatchMail({
     from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
     to: toEmail,
     subject: `🔐 ${otpCode} is your KNITE Medico Registration OTP`,
@@ -179,8 +247,6 @@ async function sendRegistrationOTP(toEmail, otpCode, shopName) {
  * Send 6-Digit Password Reset OTP from kniteinfotech@gmail.com
  */
 async function sendPasswordResetOTP(toEmail, otpCode) {
-  const mailer = getTransporter();
-
   const html = `
     <!DOCTYPE html>
     <html>
@@ -225,7 +291,7 @@ async function sendPasswordResetOTP(toEmail, otpCode) {
     </html>
   `;
 
-  return await mailer.sendMail({
+  return await dispatchMail({
     from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
     to: toEmail,
     subject: `🔑 ${otpCode} is your KNITE Medico Password Reset OTP`,
@@ -405,7 +471,7 @@ async function sendSystemUpdate(toEmail, updateTitle, updateDetails) {
     </html>
   `;
 
-  return await mailer.sendMail({
+  return await dispatchMail({
     from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
     to: toEmail,
     subject: `📢 KNITE Medico Update: ${updateTitle}`,
@@ -519,7 +585,7 @@ async function sendStoreApprovalEmail({ toEmail, shopName, ownerName, planType =
     </html>
   `;
 
-  return await mailer.sendMail({
+  return await dispatchMail({
     from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
     to: toEmail,
     subject: `🎉 Store Approved & Activated: Welcome to KNITE Medico (${shopName})`,
@@ -602,7 +668,7 @@ async function sendRegistrationConfirmationEmail({ toEmail, shopName, ownerName,
     </html>
   `;
 
-  return await mailer.sendMail({
+  return await dispatchMail({
     from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
     to: toEmail,
     subject: isTrial 
@@ -637,7 +703,7 @@ async function sendStoreRejectionEmail({ toEmail, shopName, reason }) {
     </html>
   `;
 
-  return await mailer.sendMail({
+  return await dispatchMail({
     from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
     to: toEmail,
     subject: `Notice: Store Registration Update for ${shopName}`,

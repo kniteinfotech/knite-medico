@@ -83,11 +83,17 @@ export default function WhatsAppSetupModal({ isOpen, onClose, onSave, theme }) {
         setUserPhone(data.userPhone);
 
         // If newly connected and browser notifications permitted, alert the user
-        if (data.status === 'CONNECTED' && status !== 'CONNECTED' && 'Notification' in window && Notification.permission === 'granted') {
-          new Notification('KNITE Medico WhatsApp Connected! 🎉', {
-            body: `Your store (+${data.userPhone || ''}) is now linked for automatic background billing.`,
-            icon: '/logo_icon.png'
-          });
+        if (data.status === 'CONNECTED' && status !== 'CONNECTED' && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+          try {
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.ready.then(reg => {
+                reg.showNotification('KNITE Medico WhatsApp Connected! 🎉', {
+                  body: `Your store (+${data.userPhone || ''}) is now linked for automatic background billing.`,
+                  icon: '/logo_icon.png'
+                });
+              }).catch(() => {});
+            }
+          } catch {}
         }
       }
     } catch (err) {
@@ -122,26 +128,36 @@ export default function WhatsAppSetupModal({ isOpen, onClose, onSave, theme }) {
   }
 
   async function handleRequestPairingCode() {
-    if (!mobilePhone || mobilePhone.replace(/\D/g, '').length < 10) {
-      setLastError('Please enter a valid 10-digit WhatsApp mobile number');
+    const rawDigits = (mobilePhone || '').replace(/\D/g, '');
+    if (rawDigits.length < 10) {
+      setLastError('Please enter a valid 10-digit mobile number');
       return;
     }
     setConnecting(true);
     setLastError(null);
     setPairingCode('');
 
-    // Request notification permission if not yet granted
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
+    try {
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().catch(() => {});
+      }
+    } catch {}
 
     try {
       const res = await fetch(`${cloudUrl}/api/whatsapp/pairing-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ store_id: storeId, phone: mobilePhone.trim() })
+        body: JSON.stringify({ store_id: storeId, phone: rawDigits })
       });
-      const data = await res.json();
+      
+      const resText = await res.text();
+      let data = {};
+      try {
+        data = JSON.parse(resText);
+      } catch {
+        throw new Error(res.ok ? 'Unexpected response from server' : `Server connection error (${res.status})`);
+      }
+
       if (data.success && data.pairingCode) {
         setPairingCode(data.pairingCode);
         setStatus('PAIRING_CODE_READY');
@@ -149,7 +165,7 @@ export default function WhatsAppSetupModal({ isOpen, onClose, onSave, theme }) {
         setLastError(data.error || 'Could not generate pairing code. Please retry.');
       }
     } catch (err) {
-      setLastError('Connection error: ' + err.message);
+      setLastError(err.message || 'Connection error. Please try again.');
     } finally {
       setConnecting(false);
     }
@@ -157,7 +173,19 @@ export default function WhatsAppSetupModal({ isOpen, onClose, onSave, theme }) {
 
   function handleCopyCode() {
     if (!pairingCode) return;
-    navigator.clipboard.writeText(pairingCode.replace(/-/g, ''));
+    const clean = pairingCode.replace(/-/g, '');
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(clean).catch(() => {});
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = clean;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+    } catch {}
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 3000);
   }
@@ -339,17 +367,17 @@ export default function WhatsAppSetupModal({ isOpen, onClose, onSave, theme }) {
             /* NOT CONNECTED: TABBED PAIRING (MOBILE PAIRING CODE OR PC QR SCAN) */
             <div className="space-y-4">
               {/* Tab Selector */}
-              <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <div className="flex flex-col sm:flex-row p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 gap-1">
                 <button
                   type="button"
                   onClick={() => setPairingMode('phone')}
-                  className={`py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition ${
+                  className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition ${
                     pairingMode === 'phone'
                       ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-sm border border-slate-200 dark:border-slate-700'
                       : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  <Smartphone className="w-4 h-4 text-emerald-600" />
+                  <Smartphone className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>📱 Phone Code (Mobile)</span>
                 </button>
                 <button
@@ -358,20 +386,20 @@ export default function WhatsAppSetupModal({ isOpen, onClose, onSave, theme }) {
                     setPairingMode('qr');
                     if (!qrCode) handleStartPairing(true);
                   }}
-                  className={`py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition ${
+                  className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition ${
                     pairingMode === 'qr'
                       ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-sm border border-slate-200 dark:border-slate-700'
                       : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  <QrCode className="w-4 h-4 text-emerald-600" />
+                  <QrCode className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>💻 Scan QR (PC / Laptop)</span>
                 </button>
               </div>
 
               {/* MODE 1: MOBILE PHONE PAIRING CODE (NO CAMERA SCANNING NEEDED!) */}
               {pairingMode === 'phone' ? (
-                <div className={`p-5 rounded-2xl border space-y-4 ${
+                <div className={`p-4 sm:p-5 rounded-2xl border space-y-4 ${
                   isDark ? 'border-slate-800 bg-slate-900/60' : 'border-slate-200 bg-slate-50'
                 }`}>
                   <div className="text-center space-y-1">
@@ -386,11 +414,11 @@ export default function WhatsAppSetupModal({ isOpen, onClose, onSave, theme }) {
 
                   {pairingCode ? (
                     /* Display Pairing Code */
-                    <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border-2 border-emerald-500/50 shadow-lg text-center space-y-3">
+                    <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-800 border-2 border-emerald-500/50 shadow-lg text-center space-y-3">
                       <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
                         Your WhatsApp Pairing Code
                       </p>
-                      <div className="text-3xl sm:text-4xl font-mono font-black tracking-widest text-emerald-600 dark:text-emerald-400 select-all">
+                      <div className="text-2xl sm:text-4xl font-mono font-black tracking-widest text-emerald-600 dark:text-emerald-400 select-all break-all">
                         {pairingCode}
                       </div>
 
@@ -428,26 +456,27 @@ export default function WhatsAppSetupModal({ isOpen, onClose, onSave, theme }) {
                     /* Phone Number Input Form */
                     <div className="space-y-3">
                       <div>
-                        <label className="text-xs font-extrabold text-slate-700 dark:text-slate-200 block mb-1">
+                        <label className="text-xs font-extrabold text-slate-700 dark:text-slate-200 block mb-1.5">
                           Your Pharmacy WhatsApp Mobile Number:
                         </label>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <input
                             type="tel"
+                            maxLength={10}
                             value={mobilePhone}
-                            onChange={(e) => setMobilePhone(e.target.value)}
+                            onChange={(e) => setMobilePhone(e.target.value.replace(/\D/g, ''))}
                             placeholder="e.g. 9876543210 (10 digits)"
-                            className={`flex-1 px-4 py-3 rounded-xl border text-sm font-mono font-bold outline-none ${
+                            className={`w-full sm:flex-1 px-4 py-3 rounded-xl border text-sm font-mono font-bold outline-none ${
                               isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-                            }`}
+                            } focus:border-emerald-500`}
                           />
                           <button
                             type="button"
                             onClick={handleRequestPairingCode}
                             disabled={connecting}
-                            className="px-5 py-3 bg-gradient-to-r from-[#25D366] to-[#128C7E] hover:from-emerald-500 hover:to-emerald-700 text-white rounded-xl text-xs font-black shadow-lg shadow-emerald-500/20 flex items-center gap-1.5 transition shrink-0"
+                            className="w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-[#25D366] to-[#128C7E] hover:from-emerald-500 hover:to-emerald-700 text-white rounded-xl text-xs font-black shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-1.5 transition shrink-0"
                           >
-                            <RefreshCw className={`w-3.5 h-3.5 ${connecting ? 'animate-spin' : ''}`} />
+                            <Zap className={`w-3.5 h-3.5 ${connecting ? 'animate-spin' : ''}`} />
                             <span>{connecting ? 'Generating Code…' : 'Get Pairing Code'}</span>
                           </button>
                         </div>
