@@ -28,6 +28,37 @@ export default function App() {
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [lastSyncResult, setLastSyncResult] = useState(null);
   const [theme, setTheme] = useState(localStorage.getItem('knite_theme') || 'light');
+  const [showNotifPrompt, setShowNotifPrompt] = useState(() => {
+    return typeof window !== 'undefined' &&
+      'Notification' in window &&
+      Notification.permission === 'default' &&
+      !sessionStorage.getItem('dismissed_notification_prompt');
+  });
+
+  const handleEnableNotifications = async () => {
+    if ('Notification' in window) {
+      try {
+        const perm = await Notification.requestPermission();
+        if (perm === 'granted') {
+          if ('serviceWorker' in navigator) {
+            const reg = await navigator.serviceWorker.ready;
+            reg.showNotification('KNITE Medico Live', {
+              body: 'Push notifications are now active on your device! 🎉',
+              icon: '/logo_icon.png'
+            });
+          } else {
+            new Notification('KNITE Medico Live', {
+              body: 'Push notifications are now active on your device! 🎉',
+              icon: '/logo_icon.png'
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('Notification permission request error:', e);
+      }
+    }
+    setShowNotifPrompt(false);
+  };
 
   // Listen to browser navigation changes (/admin)
   useEffect(() => {
@@ -285,6 +316,34 @@ export default function App() {
 
       {/* Main Tab Content */}
       <main className={`flex-1 w-full ${activeTab === 'cloud' ? 'max-w-none' : 'max-w-7xl mx-auto'}`}>
+
+        {/* Push Notification Opt-in Prompt */}
+        {showNotifPrompt && (
+          <div className="mb-4 p-3.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 flex items-center justify-between gap-3 text-xs shadow-sm">
+            <div className="flex items-center gap-2.5 text-indigo-900 dark:text-indigo-200 min-w-0">
+              <span className="text-xl shrink-0">🔔</span>
+              <span className="font-bold truncate sm:whitespace-normal">Enable push notifications for real-time WhatsApp & stock expiry alerts on your device.</span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={handleEnableNotifications}
+                className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-sm transition active:scale-95 whitespace-nowrap"
+              >
+                Enable
+              </button>
+              <button
+                onClick={() => {
+                  setShowNotifPrompt(false);
+                  sessionStorage.setItem('dismissed_notification_prompt', 'true');
+                }}
+                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold"
+                aria-label="Dismiss notification prompt"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Grace Period Warning Banner */}
         {isInGrace && (
