@@ -1,4 +1,4 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const QRCode = require('qrcode');
 const fs = require('fs');
@@ -75,18 +75,16 @@ async function requestPairingCodeForStore(storeId, phoneNumber) {
   const cleanPhone = cleanPhoneNumber(phoneNumber);
   if (!cleanPhone) throw new Error('Valid 10-digit mobile phone number required');
 
-  let session = sessions.get(storeId);
-  if (!session || !session.sock || session.status === 'DISCONNECTED') {
-    await startStoreSession(storeId, true);
-    session = sessions.get(storeId);
-  }
+  // Always start a fresh clean session for pairing code to reset WhatsApp handshake state
+  await startStoreSession(storeId, true);
+  const session = sessions.get(storeId);
 
   if (session && session.sock) {
     if (session.sock.authState.creds.registered) {
       throw new Error('This pharmacy WhatsApp account is already linked.');
     }
-    // Allow WebSocket connection 2s to establish before requesting pairing code
-    await new Promise(r => setTimeout(r, 2500));
+    // Allow WebSocket connection 3.5s to establish handshake before requesting pairing code
+    await new Promise(r => setTimeout(r, 3500));
     try {
       const rawCode = await session.sock.requestPairingCode(cleanPhone);
       const formattedCode = rawCode?.match(/.{1,4}/g)?.join('-') || rawCode;
@@ -152,8 +150,11 @@ async function startStoreSession(storeId, forceNew = false) {
       auth: state,
       logger: pino({ level: 'silent' }),
       printQRInTerminal: false,
-      browser: ['KNITE Medico SaaS', 'Chrome', '1.0.0'],
-      syncFullHistory: false
+      browser: Browsers.ubuntu('Chrome'),
+      syncFullHistory: false,
+      connectTimeoutMs: 60000,
+      defaultQueryTimeoutMs: 60000,
+      keepAliveIntervalMs: 15000
     });
 
     sessionData.sock = sock;
