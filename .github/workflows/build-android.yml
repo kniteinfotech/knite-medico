@@ -66,22 +66,60 @@ jobs:
           bubblewrap update --skipVersionUpgrade
           chmod +x gradlew
 
-      - name: Build Signed APK and AAB Bundle
+      - name: Compile and Build APK and AAB Bundle
         working-directory: ./android
-        env:
-          BUBBLEWRAP_KEYSTORE_PASSWORD: "KniteMedicoPass2026!"
-          BUBBLEWRAP_KEY_PASSWORD: "KniteMedicoPass2026!"
         run: |
-          bubblewrap build --manifest=twa-manifest.json --skipPwaValidation || (echo "=== GRADLE FAILURE DIAGNOSTIC ===" && ./gradlew assembleRelease --stacktrace)
+          echo "Building Gradle Release..."
+          ./gradlew assembleRelease bundleRelease --stacktrace > build.log 2>&1 || BUILD_FAILED=1
+          if [ "$BUILD_FAILED" = "1" ]; then
+            echo "## ❌ Gradle Build Error Log" >> $GITHUB_STEP_SUMMARY
+            echo '```text' >> $GITHUB_STEP_SUMMARY
+            tail -n 80 build.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat build.log | tail -n 80
+            exit 1
+          fi
+          echo "Gradle compilation succeeded!"
+
+      - name: Sign APK and AAB Bundle
+        working-directory: ./android
+        run: |
+          echo "Signing APK..."
+          find app/build/outputs/ -type f
+          UNSIGNED_APK=$(find app/build/outputs/ -name "*release*.apk" | head -n 1)
+          ${ANDROID_HOME}/build-tools/36.1.0/apksigner sign \
+            --ks android.keystore \
+            --ks-pass pass:KniteMedicoPass2026! \
+            --ks-key-alias android \
+            --key-pass pass:KniteMedicoPass2026! \
+            --out knite-medico-release.apk \
+            "$UNSIGNED_APK"
+          
+          echo "Signing AAB Bundle..."
+          UNSIGNED_AAB=$(find app/build/outputs/ -name "*release*.aab" | head -n 1)
+          jarsigner -keystore android.keystore \
+            -storepass "KniteMedicoPass2026!" \
+            -keypass "KniteMedicoPass2026!" \
+            "$UNSIGNED_AAB" \
+            android
+          cp "$UNSIGNED_AAB" knite-medico-playstore.aab
+          echo "Signing complete!"
 
       - name: Upload APK (For Direct Phone Install)
         uses: actions/upload-artifact@v4
         with:
           name: knite-medico-release-apk
-          path: android/*.apk
+          path: android/knite-medico-release.apk
 
       - name: Upload AAB Bundle (For Google Play Store)
         uses: actions/upload-artifact@v4
         with:
           name: knite-medico-playstore-aab
-          path: android/*.aab
+          path: android/knite-medico-playstore.aab
+
+      - name: Upload Build Log on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-build-log
+          path: android/build.log
