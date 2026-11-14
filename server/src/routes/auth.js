@@ -693,9 +693,9 @@ router.post('/forgot-password', async (req, res) => {
       [userId, tokenHash]
     );
 
-    // Dispatch 6-Digit OTP Email
+    // Dispatch 6-Digit OTP Email asynchronously (non-blocking)
     const emailService = require('../services/emailService');
-    await emailService.sendPasswordResetOTP(cleanEmail, otpCode).catch(err => {
+    emailService.sendPasswordResetOTP(cleanEmail, otpCode).catch(err => {
       console.error('Failed to send Password Reset OTP email:', err);
     });
 

@@ -28,21 +28,21 @@ function getTransporter() {
   const port = process.env.SMTP_PORT || 587;
 
   if (pass) {
-    if (host && host !== 'smtp.gmail.com') {
-      transporter = nodemailer.createTransport({
-        host,
-        port: parseInt(port, 10),
-        secure: parseInt(port, 10) === 465,
-        auth: { user, pass }
-      });
-      console.log(`📧 [EmailService] Configured custom SMTP transporter (${host}:${port}) with ${user}`);
-    } else {
-      transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user, pass }
-      });
-      console.log(`📧 [EmailService] Configured live Gmail transporter with ${user}`);
-    }
+    const parsedPort = parseInt(port, 10) || 587;
+    const isPort465 = parsedPort === 465;
+    transporter = nodemailer.createTransport({
+      host: host || 'smtp.gmail.com',
+      port: parsedPort,
+      secure: isPort465,
+      auth: { user, pass },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+    console.log(`📧 [EmailService] Configured live SMTP transporter (${host || 'smtp.gmail.com'}:${parsedPort}) with ${user}`);
   } else {
     // Development / Logging fallback transport (prevents app crashes when no App Password is set)
     transporter = {
