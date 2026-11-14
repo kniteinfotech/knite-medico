@@ -45,6 +45,22 @@ router.post('/connect', async (req, res) => {
   }
 });
 
+// 2.5 Request 8-Digit Pairing Code for Mobile Phone Linking (No Camera Scanning Needed)
+router.post('/pairing-code', async (req, res) => {
+  const { store_id, phone } = req.body;
+  const storeId = store_id || 'default';
+  if (!phone) {
+    return res.status(400).json({ error: 'Mobile phone number is required to generate pairing code' });
+  }
+  try {
+    const result = await whatsappManager.requestPairingCodeForStore(storeId, phone);
+    res.json(result);
+  } catch (err) {
+    console.error(`WhatsApp pairing code error for ${storeId}:`, err);
+    res.status(500).json({ error: err.message || 'Failed to generate WhatsApp pairing code' });
+  }
+});
+
 // 3. Disconnect / Unlink WhatsApp Session for a Store
 router.post('/disconnect', async (req, res) => {
   const { store_id } = req.body;

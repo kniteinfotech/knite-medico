@@ -62,8 +62,49 @@ function getStoreStatus(storeId) {
     hasSavedSession: true,
     userPhone: session.userPhone,
     qrCode: session.qrDataUrl,
+    pairingCode: session.pairingCode,
     lastError: session.lastError
   };
+}
+
+/**
+ * Request an 8-character pairing code for mobile phone WhatsApp linking
+ * (Allows pharmacists on mobile phones to link without scanning a QR on their own screen)
+ */
+async function requestPairingCodeForStore(storeId, phoneNumber) {
+  const cleanPhone = cleanPhoneNumber(phoneNumber);
+  if (!cleanPhone) throw new Error('Valid 10-digit mobile phone number required');
+
+  let session = sessions.get(storeId);
+  if (!session || !session.sock || session.status === 'DISCONNECTED') {
+    await startStoreSession(storeId, true);
+    session = sessions.get(storeId);
+  }
+
+  if (session && session.sock) {
+    if (session.sock.authState.creds.registered) {
+      throw new Error('This pharmacy WhatsApp account is already linked.');
+    }
+    // Allow WebSocket connection 2s to establish before requesting pairing code
+    await new Promise(r => setTimeout(r, 2500));
+    try {
+      const rawCode = await session.sock.requestPairingCode(cleanPhone);
+      const formattedCode = rawCode?.match(/.{1,4}/g)?.join('-') || rawCode;
+      session.pairingCode = formattedCode;
+      session.status = 'PAIRING_CODE_READY';
+      console.log(`📲 [WA-${storeId}] Mobile Pairing Code generated for +${cleanPhone}: ${formattedCode}`);
+      return {
+        success: true,
+        pairingCode: formattedCode,
+        phone: cleanPhone,
+        message: 'Pairing code generated! Open WhatsApp notification on this phone to link.'
+      };
+    } catch (pairErr) {
+      console.error(`[WA-${storeId}] Pairing code request failed:`, pairErr);
+      throw new Error(pairErr.message || 'WhatsApp rejected pairing code request. Check your phone number.');
+    }
+  }
+  throw new Error('Failed to initialize WhatsApp connection socket');
 }
 
 /**
@@ -285,6 +326,7 @@ function autoResumeAllSessions() {
 module.exports = {
   getStoreStatus,
   startStoreSession,
+  requestPairingCodeForStore,
   disconnectStore,
   sendBillWhatsApp,
   autoResumeAllSessions,

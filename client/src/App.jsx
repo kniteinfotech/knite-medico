@@ -10,7 +10,6 @@ import AuthScreen from './components/AuthScreen';
 import WhatsAppSetupModal from './components/WhatsAppSetupModal';
 import GSTSettingsModal from './components/GSTSettingsModal';
 import SuperAdminPortal from './components/SuperAdminPortal';
-import PhonePeModal from './components/PhonePeModal';
 import PlanSelectionScreen from './components/PlanSelectionScreen';
 import { seedInitialDataIfEmpty, db } from './db/localDb';
 import { SyncService } from './services/syncService';
@@ -25,7 +24,7 @@ export default function App() {
   const [isCloudModalOpen, setIsCloudModalOpen] = useState(false);
   const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
   const [isGSTModalOpen, setIsGSTModalOpen] = useState(false);
-  const [isPhonePeModalOpen, setIsPhonePeModalOpen] = useState(false);
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [lastSyncResult, setLastSyncResult] = useState(null);
   const [theme, setTheme] = useState(localStorage.getItem('knite_theme') || 'light');
 
@@ -385,15 +384,15 @@ export default function App() {
         theme={theme}
       />
 
-      {/* Plan Selection & Subscription Management Modal */}
-      {isPhonePeModalOpen && (
+      {/* Plan Selection & Razorpay Subscription Management Modal */}
+      {isPlanModalOpen && (
         <PlanSelectionScreen
           shopOwner={shopOwner}
           isModal={true}
-          onClose={() => setIsPhonePeModalOpen(false)}
+          onClose={() => setIsPlanModalOpen(false)}
           onPlanSelected={(planData) => {
             handlePlanSelected(planData);
-            setIsPhonePeModalOpen(false);
+            setIsPlanModalOpen(false);
           }}
           theme={theme}
         />
