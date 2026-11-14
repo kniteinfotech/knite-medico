@@ -72,7 +72,7 @@ jobs:
           BUBBLEWRAP_KEYSTORE_PASSWORD: "KniteMedicoPass2026!"
           BUBBLEWRAP_KEY_PASSWORD: "KniteMedicoPass2026!"
         run: |
-          bubblewrap build --manifest=twa-manifest.json --skipPwaValidation
+          bubblewrap build --manifest=twa-manifest.json --skipPwaValidation || (echo "=== GRADLE FAILURE DIAGNOSTIC ===" && ./gradlew assembleRelease --stacktrace)
 
       - name: Upload APK (For Direct Phone Install)
         uses: actions/upload-artifact@v4
