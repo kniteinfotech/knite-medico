@@ -93,6 +93,12 @@ async function authenticateToken(req, res, next) {
   });
 }
 
+const crypto = require('crypto');
+
+// In-memory rate limiting & attempt tracking for OTP security
+const otpRateLimits = new Map(); // ip_email -> { count, firstAttempt }
+const otpFailedAttempts = new Map(); // email -> count
+
 // ── Topic 2: Send Registration OTP from kniteinfotech@gmail.com ─────────────
 router.post('/send-registration-otp', async (req, res) => {
   const { email, shop_name } = req.body;
@@ -102,6 +108,24 @@ router.post('/send-registration-otp', async (req, res) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(cleanEmail)) {
     return res.status(400).json({ error: 'Please enter a valid email address' });
+  }
+
+  // Rate Limiting: Max 3 OTP requests per 10 minutes per IP/Email
+  const clientIp = getClientIp(req);
+  const rateLimitKey = `${clientIp}_${cleanEmail}`;
+  const now = Date.now();
+  const limitData = otpRateLimits.get(rateLimitKey) || { count: 0, firstAttempt: now };
+
+  if (now - limitData.firstAttempt < 10 * 60 * 1000) {
+    if (limitData.count >= 3) {
+      return res.status(429).json({ 
+        error: 'Too many OTP requests. For security, please wait 10 minutes before requesting a new code.' 
+      });
+    }
+    limitData.count += 1;
+    otpRateLimits.set(rateLimitKey, limitData);
+  } else {
+    otpRateLimits.set(rateLimitKey, { count: 1, firstAttempt: now });
   }
 
   // If already free whitelist user
@@ -120,8 +144,8 @@ router.post('/send-registration-otp', async (req, res) => {
       return res.status(409).json({ error: 'An account with this email already exists. Please login instead.' });
     }
 
-    // Generate 6-digit numeric OTP
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    // Cryptographically secure 6-digit numeric OTP (CSPRNG)
+    const otpCode = crypto.randomInt(100000, 1000000).toString();
     const tokenHash = hashCryptoToken(otpCode);
 
     // Save in email_verifications with 10-minute expiry
@@ -131,10 +155,13 @@ router.post('/send-registration-otp', async (req, res) => {
       [cleanEmail, tokenHash]
     );
 
+    // Reset failed attempt counter for fresh OTP
+    otpFailedAttempts.delete(cleanEmail);
+
     const emailService = require('../services/emailService');
     await emailService.sendRegistrationOTP(cleanEmail, otpCode, shop_name);
 
-    console.log(`🔐 [Registration OTP] Sent ${otpCode} to ${cleanEmail} from kniteinfotech@gmail.com`);
+    console.log(`🔐 [Registration OTP] Sent secure OTP to ${cleanEmail} from kniteinfotech@gmail.com`);
 
     res.json({
       success: true,
@@ -191,6 +218,16 @@ router.post('/register', async (req, res) => {
         return res.status(400).json({ error: 'Email verification OTP is required. Click "Send OTP" to receive your code.' });
       }
 
+      // Check anti-brute-force limit (Max 5 failed attempts per email)
+      const currentFails = otpFailedAttempts.get(cleanEmail) || 0;
+      if (currentFails >= 5) {
+        await client.query('DELETE FROM medico.email_verifications WHERE email = $1', [cleanEmail]);
+        await client.query('ROLLBACK');
+        return res.status(429).json({ 
+          error: 'Maximum OTP verification attempts exceeded. Your verification code has been revoked. Please request a new OTP.' 
+        });
+      }
+
       const otpHash = hashCryptoToken(otp_code.trim());
       const verRes = await client.query(
         `SELECT id FROM medico.email_verifications
@@ -200,11 +237,15 @@ router.post('/register', async (req, res) => {
       );
 
       if (verRes.rows.length === 0) {
+        otpFailedAttempts.set(cleanEmail, currentFails + 1);
         await client.query('ROLLBACK');
-        return res.status(400).json({ error: 'Invalid or expired OTP. Please check the code sent from kniteinfotech@gmail.com.' });
+        return res.status(400).json({ 
+          error: `Invalid or expired OTP (${4 - currentFails} attempts remaining). Please check the code sent from kniteinfotech@gmail.com.` 
+        });
       }
 
-      // Mark OTP as verified
+      // Mark OTP as verified & reset failed counter
+      otpFailedAttempts.delete(cleanEmail);
       await client.query('UPDATE medico.email_verifications SET verified = true WHERE id = $1', [verRes.rows[0].id]);
     }
 

@@ -16,14 +16,14 @@ async function requirePaidCloudSubscription(req, res, next) {
   const tenantId = req.user.tenant_id;
   const userEmail = (req.user.email || '').toLowerCase().trim();
 
-  // Whitelist exception: nitheesh8797@gmail.com / nitheesh has lifetime free cloud
-  if (userEmail.includes('nitheesh')) {
+  // Whitelist exception: strictly nitheesh8797@gmail.com
+  if (userEmail === 'nitheesh8797@gmail.com') {
     return next();
   }
 
   try {
     const result = await pool.query(
-      `SELECT shop_name, plan_type, plan_expires_at, status, owner_name 
+      `SELECT shop_name, plan_type, plan_expires_at, status, email 
        FROM medico.tenants WHERE id = $1`,
       [tenantId]
     );
@@ -33,9 +33,9 @@ async function requirePaidCloudSubscription(req, res, next) {
     }
 
     const tenant = result.rows[0];
-    const ownerName = (tenant.owner_name || '').toLowerCase();
+    const tenantEmail = (tenant.email || '').toLowerCase().trim();
 
-    if (ownerName.includes('nitheesh') || userEmail.includes('nitheesh')) {
+    if (tenantEmail === 'nitheesh8797@gmail.com') {
       return next();
     }
 

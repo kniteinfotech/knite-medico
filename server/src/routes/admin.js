@@ -2,23 +2,30 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
 
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'KNITE_MEDICO_SUPER_SECRET_KEY_2026';
+const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? null : 'KNITE_MEDICO_SUPER_SECRET_KEY_2026');
 const ADMIN_EMAILS = ['kniteinfotech@gmail.com', 'nitheesh8797@gmail.com'];
 
 // SuperAdmin Authentication Middleware (Strict Authorization)
 function authenticateSuperAdmin(req, res, next) {
-  const secretKey = req.headers['x-admin-key'] || req.query.admin_key;
-  const masterKey = process.env.SUPERADMIN_KEY || 'KNITE_MASTER_2026';
+  const secretKey = req.headers['x-admin-key'];
+  const masterKey = process.env.SUPERADMIN_KEY || (process.env.NODE_ENV === 'production' ? null : 'KNITE_MASTER_2026');
   
-  // 1. Verify Master Secret Key if provided
-  if (secretKey && secretKey === masterKey) {
-    return next();
+  // 1. Verify Master Secret Key via HTTP Header using constant-time comparison
+  if (secretKey && masterKey) {
+    try {
+      const keyBuf = Buffer.from(secretKey);
+      const masterBuf = Buffer.from(masterKey);
+      if (keyBuf.length === masterBuf.length && crypto.timingSafeEqual(keyBuf, masterBuf)) {
+        return next();
+      }
+    } catch {}
   }
   
   // 2. Alternatively verify Bearer JWT token and check SuperAdmin privileges
   const authHeader = req.headers['authorization'];
-  if (authHeader && authHeader.startsWith('Bearer ')) {
+  if (authHeader && authHeader.startsWith('Bearer ') && JWT_SECRET) {
     const token = authHeader.split(' ')[1];
     try {
       const decoded = jwt.verify(token, JWT_SECRET);

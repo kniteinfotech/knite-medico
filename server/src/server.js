@@ -50,23 +50,31 @@ app.use((req, res, next) => {
   next();
 });
 
-// Secure CORS Configuration (Supports Desktop Electron, Mobile & Web)
+// Secure CORS Configuration (Strict Origin Filtering: Web, Mobile PWA & Desktop)
 const allowedOrigins = [
+  'https://knitemedico.kniteinfotech.in',
+  'https://www.knitemedico.kniteinfotech.in',
   'http://localhost:5173',
   'http://localhost:5055',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:5055',
-  'http://192.168.1.50:5173',
-  'http://192.168.1.50:5055'
+  'capacitor://localhost',
+  'http://localhost',
+  'https://localhost'
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow non-browser requests (Electron desktop app, mobile native, curl)
-    if (!origin || origin.startsWith('file://') || origin.startsWith('vscode-webview://') || allowedOrigins.includes(origin) || origin.startsWith('http://192.168.')) {
+    // Allow non-browser client requests (Android Capacitor native app, Electron desktop app, background jobs)
+    if (!origin || origin.startsWith('file://') || origin.startsWith('vscode-webview://') || origin.startsWith('capacitor://')) {
       return callback(null, true);
     }
-    callback(null, true); // Permissive for local network POS clients while maintaining origin header safety
+    // Allow verified domain origins or local network POS setups
+    if (allowedOrigins.includes(origin) || origin.startsWith('http://192.168.') || origin.endsWith('.kniteinfotech.in')) {
+      return callback(null, true);
+    }
+    console.warn(`🚨 [CORS Blocked] Unauthorized origin attempted access: ${origin}`);
+    callback(new Error('CORS_ORIGIN_NOT_ALLOWED'));
   },
   credentials: true
 }));

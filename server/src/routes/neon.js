@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
-const {
-  uploadToNeonStorage,
-  listNeonStorage,
-  getFromNeonStorage
-} = require('../services/backupStorageService');
+const { authenticateToken } = require('./auth');
+
+// Require authentication for Neon infrastructure inspection
+router.use(authenticateToken);
 
 function getHelloFunctionUrl() {
   if (process.env.NEON_HELLO_FUNCTION_URL) {

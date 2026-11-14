@@ -106,48 +106,56 @@ router.post('/verify-payment', async (req, res) => {
     razorpay_payment_id,
     razorpay_signature,
     tenant_id,
-    plan = 'pro_cloud',
+    plan = 'cloud_900',
     billing_cycle = 'monthly',
     shop_name,
     email
   } = req.body;
 
-  if (!razorpay_payment_id) {
-    return res.status(400).json({ error: 'Razorpay Payment ID is required' });
+  // Strict anti-tampering validation: ALL three fields are mandatory
+  if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
+    return res.status(400).json({ 
+      error: 'SECURITY_VIOLATION: razorpay_payment_id, razorpay_order_id, and razorpay_signature are strictly required.' 
+    });
   }
 
   const config = await getRazorpayConfig();
+  if (!config.key_secret) {
+    return res.status(500).json({ error: 'Razorpay secret key not configured on server' });
+  }
 
-  // Signature verification if signature is provided
-  if (razorpay_order_id && razorpay_signature) {
-    const generated_signature = crypto
-      .createHmac('sha256', config.key_secret)
-      .update(razorpay_order_id + '|' + razorpay_payment_id)
-      .digest('hex');
+  // Cryptographic HMAC-SHA256 signature verification (Constant-time to prevent timing attacks)
+  const expectedSignature = crypto
+    .createHmac('sha256', config.key_secret)
+    .update(razorpay_order_id + '|' + razorpay_payment_id)
+    .digest('hex');
 
-    if (generated_signature !== razorpay_signature) {
-      return res.status(400).json({ error: 'Invalid Razorpay payment signature verification failed.' });
-    }
+  const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
+  const providedBuffer = Buffer.from(razorpay_signature, 'utf8');
+
+  if (expectedBuffer.length !== providedBuffer.length || !crypto.timingSafeEqual(expectedBuffer, providedBuffer)) {
+    console.warn(`🚨 [Security Alert] Fake or Tampered Razorpay Payment Signature Detected! PaymentID: ${razorpay_payment_id}`);
+    return res.status(400).json({ error: 'Cryptographic signature verification failed. Unauthorized transaction.' });
   }
 
   console.log(`🎉 [Razorpay Payment Verified] Payment ID: ${razorpay_payment_id} | Order ID: ${razorpay_order_id} | Tenant: ${tenant_id || 'N/A'}`);
 
-  // Automatically upgrade tenant in PostgreSQL DB
+  // Automatically upgrade tenant in PostgreSQL DB (Strictly parameterized)
   let dbUpgraded = false;
   if (tenant_id) {
     try {
-      const intervalStr = billing_cycle === 'yearly' ? '365 days' : '30 days';
+      const days = billing_cycle === 'yearly' ? 365 : 30;
       await pool.query(
         `UPDATE medico.tenants 
          SET plan_type = $2, 
              status = 'APPROVED', 
-             plan_expires_at = NOW() + INTERVAL '${intervalStr}', 
+             plan_expires_at = NOW() + ($3 || ' days')::INTERVAL, 
              updated_at = NOW() 
          WHERE id = $1`,
-        [tenant_id, plan]
+        [tenant_id, plan, `${days}`]
       );
       dbUpgraded = true;
-      console.log(`🚀 [PostgreSQL Upgrade] Tenant ${tenant_id} updated to ${plan} (${billing_cycle})!`);
+      console.log(`🚀 [PostgreSQL Upgrade] Tenant ${tenant_id} updated to ${plan} (${days} days)!`);
     } catch (dbErr) {
       console.warn('DB update warning during Razorpay verification:', dbErr.message);
     }

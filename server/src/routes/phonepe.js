@@ -126,8 +126,21 @@ router.get('/status/:transactionId', async (req, res) => {
   });
 });
 
-// 3. COMPLETE / SIMULATE SUCCESSFUL PAYMENT (For testing or Instant UPI Confirmation)
+// 3. COMPLETE / SIMULATE SUCCESSFUL PAYMENT (Strictly blocked in production)
 router.post('/verify-success', async (req, res) => {
+  // Hard block in production environments to prevent payment bypass
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ 
+      error: 'SECURITY_RESTRICTION: Simulated payments are strictly disabled in production.' 
+    });
+  }
+
+  // In non-prod, require master key authorization
+  const masterKey = process.env.SUPERADMIN_KEY;
+  if (!masterKey || req.headers['x-admin-key'] !== masterKey) {
+    return res.status(403).json({ error: 'Unauthorized simulation attempt' });
+  }
+
   const { transaction_id, tenant_id, purpose, utr_number } = req.body;
   const txn = activeTransactions.get(transaction_id) || {
     transaction_id,
@@ -147,14 +160,14 @@ router.post('/verify-success', async (req, res) => {
     try {
       await pool.query(
         `UPDATE medico.tenants 
-         SET plan_type = 'pro_cloud',
+         SET plan_type = 'cloud_900',
              status = 'APPROVED',
-             plan_expires_at = NOW() + INTERVAL '365 days',
+             plan_expires_at = NOW() + INTERVAL '30 days',
              updated_at = NOW()
          WHERE id = $1`,
         [tenant_id]
       );
-      console.log(`🎉 [PhonePe Gateway] Upgraded tenant ${tenant_id} to PRO_CLOUD with 1-Year Cloud Sync!`);
+      console.log(`🎉 [PhonePe Gateway] Upgraded tenant ${tenant_id} to cloud_900!`);
     } catch (dbErr) {
       console.error('Failed to upgrade tenant on payment:', dbErr);
     }

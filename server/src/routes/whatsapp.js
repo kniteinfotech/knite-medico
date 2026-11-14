@@ -57,6 +57,9 @@ router.post('/disconnect', async (req, res) => {
   }
 });
 
+// Rate limit tracking to prevent WhatsApp spam / flooding attacks
+const waRateLimits = new Map();
+
 // 4. Send Automated Bill via WhatsApp (Headless Server Dispatch)
 router.post('/send-bill', async (req, res) => {
   const { 
@@ -73,7 +76,21 @@ router.post('/send-bill', async (req, res) => {
     custom_message
   } = req.body;
 
-  const storeId = store_id || 'default';
+  const storeId = (store_id || 'default').replace(/[^a-zA-Z0-9_-]/g, '');
+
+  // Rate Limiting: Max 40 messages per minute per store to prevent carrier blocks
+  const now = Date.now();
+  const storeLimit = waRateLimits.get(storeId) || { count: 0, resetAt: now + 60000 };
+  if (now > storeLimit.resetAt) {
+    storeLimit.count = 1;
+    storeLimit.resetAt = now + 60000;
+  } else {
+    storeLimit.count += 1;
+    if (storeLimit.count > 40) {
+      return res.status(429).json({ error: 'WhatsApp dispatch rate limit exceeded. Please wait a minute.' });
+    }
+  }
+  waRateLimits.set(storeId, storeLimit);
 
   if (!phone) {
     return res.status(400).json({ error: 'Customer phone number required' });
