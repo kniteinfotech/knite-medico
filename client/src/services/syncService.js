@@ -23,22 +23,8 @@ export class SyncService {
     }
   }
 
-  // Push local changes to Cloud Server (Paid Pro Cloud feature)
+  // Push local changes to Cloud Server (All-In-One Cloud SaaS)
   static async pushSync() {
-    const storeProfile = await db.settings.get('store_profile');
-    const paidCloudPlans = ['cloud_900', 'pro_cloud', 'cloud_799', 'cloud', 'enterprise', 'enterprise_1299', 'enterprise_1499'];
-    const userEmail = (storeProfile?.email || '').toLowerCase();
-    const isCloudPlan = storeProfile && (paidCloudPlans.includes(storeProfile.plan_type) || userEmail.includes('nitheesh'));
-
-    if (storeProfile && !isCloudPlan) {
-      return { 
-        success: false, 
-        isLocalOnly: true, 
-        reason: 'LOCAL_TIER_ACTIVE',
-        message: 'Running in Basic POS Mode (₹599). Upgrade to Pro Cloud (₹799/mo) to enable Cloud Sync & 1TB HDD Backups.' 
-      };
-    }
-
     const token = this.getAuthToken();
     if (!token) return { success: false, reason: 'Not logged in to Cloud' };
 
@@ -67,14 +53,6 @@ export class SyncService {
 
       if (!response.ok) {
         const errJson = await response.json().catch(() => ({}));
-        if (errJson.error === 'PAID_SUBSCRIPTION_REQUIRED' || errJson.isLocalOnly) {
-          return {
-            success: false,
-            isLocalOnly: true,
-            reason: 'LOCAL_TIER_ACTIVE',
-            message: errJson.message || 'Cloud sync requires an active Pro Cloud plan.'
-          };
-        }
         throw new Error(errJson.error || errJson.message || 'Sync push failed on server');
       }
 
@@ -86,19 +64,20 @@ export class SyncService {
       }
 
       localStorage.setItem('knite_last_sync_timestamp', result.synced_at || new Date().toISOString());
+      window.dispatchEvent(new CustomEvent('knite_sync_completed', { detail: { pushed: true, count: medicinesToSync.length } }));
       return { success: true, ...result };
     } catch (err) {
-      console.warn('Sync push deferred - working in offline local mode:', err.message);
+      console.warn('Sync push error:', err.message);
       return { success: false, error: err.message };
     }
   }
 
   // Pull remote updates from Cloud Server to Local App
-  static async pullSync() {
+  static async pullSync(forceFull = false) {
     const token = this.getAuthToken();
     if (!token) return { success: false, reason: 'Not logged in to Cloud' };
 
-    const lastSync = localStorage.getItem('knite_last_sync_timestamp') || '1970-01-01T00:00:00.000Z';
+    const lastSync = forceFull ? '1970-01-01T00:00:00.000Z' : (localStorage.getItem('knite_last_sync_timestamp') || '1970-01-01T00:00:00.000Z');
 
     try {
       const response = await fetch(`${this.getApiBase()}/api/sync/pull?since=${encodeURIComponent(lastSync)}`, {
@@ -109,14 +88,6 @@ export class SyncService {
 
       if (!response.ok) {
         const errJson = await response.json().catch(() => ({}));
-        if (errJson.error === 'PAID_SUBSCRIPTION_REQUIRED' || errJson.isLocalOnly) {
-          return {
-            success: false,
-            isLocalOnly: true,
-            reason: 'LOCAL_TIER_ACTIVE',
-            message: errJson.message || 'Cloud sync requires an active Pro Cloud plan.'
-          };
-        }
         throw new Error(errJson.error || 'Sync pull failed');
       }
 
@@ -124,7 +95,24 @@ export class SyncService {
 
       if (data.medicines && data.medicines.length > 0) {
         for (const med of data.medicines) {
-          await db.medicines.put(med);
+          await db.medicines.put({
+            id: med.id,
+            name: med.name,
+            generic_name: med.generic_name || '',
+            batch_number: med.batch_number || '',
+            expiry_date: med.expiry_date ? String(med.expiry_date).slice(0, 10) : '',
+            rack: med.rack || '',
+            hsn_code: med.hsn_code || '',
+            mrp: parseFloat(med.mrp) || 0,
+            purchase_price: parseFloat(med.purchase_price) || 0,
+            sale_price: parseFloat(med.sale_price) || 0,
+            gst_rate: parseFloat(med.gst_rate) || 0,
+            stock_qty: parseInt(med.stock_qty, 10) || 0,
+            min_stock: parseInt(med.min_stock, 10) || 10,
+            description: med.description || '',
+            is_deleted: Boolean(med.is_deleted),
+            updated_at: med.updated_at || new Date().toISOString()
+          });
         }
       }
 
@@ -140,7 +128,18 @@ export class SyncService {
         }
       }
 
-      localStorage.setItem('knite_last_sync_timestamp', data.current_timestamp);
+      if (data.current_timestamp) {
+        localStorage.setItem('knite_last_sync_timestamp', data.current_timestamp);
+      }
+
+      window.dispatchEvent(new CustomEvent('knite_sync_completed', { 
+        detail: { 
+          pulled_medicines: data.medicines ? data.medicines.length : 0, 
+          pulled_invoices: data.invoices ? data.invoices.length : 0,
+          pulled_customers: data.customers ? data.customers.length : 0
+        } 
+      }));
+
       return { 
         success: true, 
         pulled_medicines: data.medicines ? data.medicines.length : 0, 
@@ -148,7 +147,7 @@ export class SyncService {
         pulled_customers: data.customers ? data.customers.length : 0
       };
     } catch (err) {
-      console.warn('Sync pull deferred:', err.message);
+      console.warn('Sync pull note:', err.message);
       return { success: false, error: err.message };
     }
   }

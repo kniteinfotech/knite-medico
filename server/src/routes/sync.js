@@ -6,7 +6,7 @@ const { saveBackupToHdd } = require('../services/backupStorageService');
 
 router.use(authenticateToken);
 
-// Middleware to enforce paid cloud subscription (with strict developer exception)
+// Middleware to ensure tenant is valid and active (All users operate on the Cloud SaaS tier)
 async function requirePaidCloudSubscription(req, res, next) {
   const tenantId = req.user.tenant_id;
   const userEmail = (req.user.email || '').toLowerCase().trim();
@@ -34,20 +34,15 @@ async function requirePaidCloudSubscription(req, res, next) {
       return next();
     }
 
-    const isPaid = tenant.plan_type === 'cloud_900' || tenant.plan_type === 'pro_cloud' || tenant.plan_type === 'cloud_799' || tenant.plan_type === 'cloud' || tenant.plan_type === 'enterprise' || tenant.plan_type === 'enterprise_1299';
-    // 1-day grace period for cloud sync if monthly payment is pending
-    const gracePeriodMs = 1 * 24 * 60 * 60 * 1000;
-    const notExpired = tenant.plan_expires_at && (new Date(tenant.plan_expires_at).getTime() + gracePeriodMs) > Date.now();
-
-    if (tenant.status === 'APPROVED' && isPaid && notExpired) {
-      return next();
+    if (tenant.status === 'SUSPENDED' || tenant.status === 'REJECTED') {
+      return res.status(403).json({
+        error: 'ACCOUNT_SUSPENDED',
+        message: 'Your store account is suspended. Contact kniteinfotech@gmail.com'
+      });
     }
 
-    return res.status(403).json({
-      error: 'PAID_SUBSCRIPTION_REQUIRED',
-      isLocalOnly: true,
-      message: 'Cloud sync requires an active paid Pro Cloud subscription. Free Local Tier data remains saved locally on your device.'
-    });
+    // All registered pharmacy accounts operate 100% on the Cloud SaaS tier
+    return next();
   } catch (err) {
     console.error('Subscription verification error:', err);
     res.status(500).json({ error: 'Failed to verify subscription status' });
@@ -63,6 +58,9 @@ router.post('/push', async (req, res) => {
 
   const client = await pool.connect();
   try {
+    // Ensure unique index for conflict resolution exists
+    await client.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_medicines_tenant_id ON medico.medicines(tenant_id, id)');
+
     await client.query('BEGIN');
     let medicinesSynced = 0;
     let invoicesSynced = 0;
@@ -70,6 +68,16 @@ router.post('/push', async (req, res) => {
 
     // Sync Medicines (Upsert strictly scoped by tenant_id)
     for (const med of medicines) {
+      if (!med || !med.name) continue;
+      const medId = med.id || ('med_' + Math.random().toString(36).substring(2, 9));
+      let expiry = null;
+      if (med.expiry_date) {
+        const d = new Date(med.expiry_date);
+        if (!isNaN(d.getTime())) {
+          expiry = d.toISOString().slice(0, 10);
+        }
+      }
+
       await client.query(
         `INSERT INTO medico.medicines (
           id, tenant_id, name, generic_name, batch_number, expiry_date,
@@ -93,10 +101,10 @@ router.post('/push', async (req, res) => {
           is_deleted = EXCLUDED.is_deleted,
           updated_at = NOW()`,
         [
-          med.id, tenantId, med.name, med.generic_name || '', med.batch_number || '',
-          med.expiry_date || null, med.rack || '', med.hsn_code || '',
-          med.mrp || 0, med.purchase_price || 0, med.sale_price || 0, med.gst_rate || 12,
-          med.stock_qty || 0, med.min_stock || 10, med.description || '', !!med.is_deleted
+          medId, tenantId, med.name, med.generic_name || '', med.batch_number || '',
+          expiry, med.rack || '', med.hsn_code || '',
+          parseFloat(med.mrp) || 0, parseFloat(med.purchase_price) || 0, parseFloat(med.sale_price) || 0, parseFloat(med.gst_rate) || 12,
+          parseInt(med.stock_qty, 10) || 0, parseInt(med.min_stock, 10) || 10, med.description || '', !!med.is_deleted
         ]
       );
       medicinesSynced++;

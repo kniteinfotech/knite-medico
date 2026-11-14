@@ -81,6 +81,13 @@ export default function POSBilling({ onSaleComplete, theme, onOpenWhatsAppModal 
     loadMedicines();
     loadConfigs();
     checkWaStatus();
+
+    const handleSync = () => {
+      loadMedicines();
+      loadConfigs();
+    };
+    window.addEventListener('knite_sync_completed', handleSync);
+    return () => window.removeEventListener('knite_sync_completed', handleSync);
   }, []);
 
   // Click outside search container to close dropdown

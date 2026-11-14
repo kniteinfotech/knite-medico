@@ -110,7 +110,10 @@ export default function App() {
     const saved = localStorage.getItem('knite_shop_owner');
     if (sessionActive === 'true' && saved) {
       try {
-        setShopOwner(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        setShopOwner(parsed);
+        // Instant cloud sync on boot
+        SyncService.pullSync().catch(() => {});
       } catch {
         setShopOwner(null);
       }
@@ -140,9 +143,23 @@ export default function App() {
   }, []);
 
   // Handle successful login / registration
-  function handleAuthSuccess(ownerProfile, isNewRegistration) {
+  async function handleAuthSuccess(ownerProfile, isNewRegistration) {
     sessionStorage.setItem('knite_session_active', 'true');
     setShopOwner(ownerProfile);
+    localStorage.setItem('knite_shop_owner', JSON.stringify(ownerProfile));
+
+    try {
+      await db.settings.put({
+        key: 'store_profile',
+        ...ownerProfile,
+        plan_type: ownerProfile.plan_type || 'cloud_900',
+        is_cloud_enabled: true
+      });
+    } catch {}
+
+    // Immediately pull all latest cloud medicines, invoices, and customers
+    SyncService.pullSync(true).catch(console.warn);
+
     if (isNewRegistration) {
       // Show plan selection screen for new registrations
       setShowPlanSelection(true);

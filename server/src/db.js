@@ -183,6 +183,10 @@ async function initDB() {
 
       ALTER TABLE medico.medicines ADD COLUMN IF NOT EXISTS description TEXT;
 
+      -- Cloud Sync conflict resolution: Unique tenant_id + medicine_id index
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_medicines_tenant_id 
+        ON medico.medicines(tenant_id, id);
+
       CREATE INDEX IF NOT EXISTS idx_medicines_tenant_updated 
         ON medico.medicines(tenant_id, updated_at);
 

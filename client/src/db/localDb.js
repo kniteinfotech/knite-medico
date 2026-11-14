@@ -174,8 +174,8 @@ export async function seedInitialDataIfEmpty() {
       thermal_printer_width: '80mm',
       cloud_url: getCloudUrl(),
       license_key: ownerInfo?.license_key || '',
-      plan_type: ownerInfo?.plan_type || 'free_local',
-      is_cloud_enabled: ownerInfo?.plan_type === 'pro_cloud'
+      plan_type: ownerInfo?.plan_type || 'cloud_900',
+      is_cloud_enabled: true
     });
   }
 }

@@ -46,7 +46,16 @@ export default function Inventory({ onStockModified, theme }) {
     description: ''
   });
 
-  useEffect(() => { loadInventory(); loadGSTConfig(); }, []);
+  useEffect(() => { 
+    loadInventory(); 
+    loadGSTConfig();
+
+    const handleSync = () => {
+      loadInventory();
+    };
+    window.addEventListener('knite_sync_completed', handleSync);
+    return () => window.removeEventListener('knite_sync_completed', handleSync);
+  }, []);
 
   async function loadInventory() {
     const items = await db.medicines.filter(m => !m.is_deleted).toArray();
@@ -119,7 +128,7 @@ export default function Inventory({ onStockModified, theme }) {
     setIsModalOpen(false);
     loadInventory();
     if (onStockModified) onStockModified();
-    SyncService.pushSync().catch(console.warn);
+    await SyncService.pushSync().catch(console.warn);
   }
 
   async function handleDelete(id) {
@@ -127,7 +136,7 @@ export default function Inventory({ onStockModified, theme }) {
       await db.medicines.update(id, { is_deleted: true, updated_at: new Date().toISOString() });
       loadInventory();
       if (onStockModified) onStockModified();
-      SyncService.pushSync().catch(console.warn);
+      await SyncService.pushSync().catch(console.warn);
     }
   }
 
