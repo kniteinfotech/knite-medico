@@ -140,7 +140,7 @@ export default function PhonePeModal({
       prefill: {
         name: storeInfo?.owner_name || 'Pharmacist',
         email: storeInfo?.email || 'pharmacy@knite.in',
-        contact: customerPhone || storeInfo?.phone || '9999999999'
+        contact: customerPhone || storeInfo?.phone || '8778721940'
       },
       theme: {
         color: '#0c2540'

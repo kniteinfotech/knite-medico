@@ -1043,7 +1043,7 @@ export default function AuthScreen({ onAuthSuccess, onOpenSuperAdmin, theme }) {
             </div>
             <div className="overflow-y-auto p-5 text-xs leading-relaxed text-slate-700 space-y-4">
               {[
-                ['1. Service Provider', 'KNITE Medico is a SaaS product owned and operated by KNITE Infotech, Chennai, Tamil Nadu, India.'],
+                ['1. Service Provider', 'KNITE Medico is a SaaS product owned and operated by KNITE Infotech, Nagercoil, Tamil Nadu, India.'],
                 ['2. Subscription & Payments', 'Subscription fee is ₹900/month for All-In-One Cloud SaaS (+ payment gateway fee, total ₹922/month), paid directly to KNITE Infotech via Razorpay Payment Gateway. All payments are final for the active billing period.'],
                 ['3. Payment Gateway Authorization', 'By subscribing, you authorize KNITE Infotech to collect subscription fees monthly via Razorpay Gateway (UPI, AutoPay, Credit/Debit Cards, Netbanking).'],
                 ['4. Drug License Verification', 'New pharmacies must submit a valid Drug License (DL) for verification. KNITE Infotech reserves the right to deny access to pharmacies that fail statutory compliance checks.'],
@@ -1051,8 +1051,8 @@ export default function AuthScreen({ onAuthSuccess, onOpenSuperAdmin, theme }) {
                 ['6. Data Ownership', 'All pharmacy data (medicines, invoices, patients) belongs to the registered pharmacy owner. KNITE Infotech does not sell, share, or monetize customer data.'],
                 ['7. Service Uptime', '99.5% uptime guaranteed for cloud services. Local POS billing works offline regardless of cloud status.'],
                 ['8. Cancellation', 'Cancel anytime via account dashboard. No partial refunds. Local data is never deleted.'],
-                ['9. Governing Law', 'These terms are governed by Indian law. Disputes subject to courts in Chennai, Tamil Nadu.'],
-                ['10. Contact', 'Email: kniteinfotech@gmail.com | WhatsApp: +91 99999 99999 | Payment Gateway: Razorpay']
+                ['9. Governing Law', 'These terms are governed by Indian law. Disputes subject to courts in Nagercoil, Tamil Nadu.'],
+                ['10. Contact', 'Email: kniteinfotech@gmail.com | Phone / WhatsApp: +91 87787 21940 | Payment Gateway: Razorpay']
               ].map(([title, text]) => (
                 <div key={title}>
                   <h4 className="font-black text-slate-900 mb-1">{title}</h4>

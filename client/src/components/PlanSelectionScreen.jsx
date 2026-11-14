@@ -187,7 +187,7 @@ export default function PlanSelectionScreen({ shopOwner, onPlanSelected, isModal
         prefill: {
           name: shopOwner?.owner_name || 'Pharmacist',
           email: shopOwner?.email || 'pharmacy@knite.in',
-          contact: shopOwner?.phone || '9999999999'
+          contact: shopOwner?.phone || '8778721940'
         },
         notes: {
           tenant_id: shopOwner?.id,
@@ -652,7 +652,7 @@ export default function PlanSelectionScreen({ shopOwner, onPlanSelected, isModal
                 <p>{text}</p>
               </div>
             ))}
-            <p className="text-[11px] text-slate-400 font-medium">Last updated: October 2026 • KNITE Infotech, Chennai, Tamil Nadu</p>
+            <p className="text-[11px] text-slate-400 font-medium">Last updated: November 2026 • KNITE Infotech, Nagercoil, Tamil Nadu</p>
           </div>
 
           <div

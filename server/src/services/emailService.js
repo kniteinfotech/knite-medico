@@ -103,7 +103,7 @@ async function sendTestEmail(toEmail) {
             This email confirms that <strong>${process.env.SMTP_USER || 'kniteinfotech@gmail.com'}</strong> is authenticated and actively dispatching emails to real user inboxes.
           </p>
           <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-          <p style="font-size: 11px; color: #94a3b8;">KNITE Infotech Engineering • Chennai, India</p>
+          <p style="font-size: 11px; color: #94a3b8;">KNITE Infotech Engineering • Nagercoil, India</p>
         </div>
       </div>
     `
@@ -158,7 +158,7 @@ async function sendRegistrationOTP(toEmail, otpCode, shopName) {
           </div>
         </div>
         <div class="footer">
-          Sent by <strong>KNITE Infotech</strong> (kniteinfotech@gmail.com) • Chennai, Tamil Nadu, India
+          Sent by <strong>KNITE Infotech</strong> (kniteinfotech@gmail.com) • Nagercoil, Tamil Nadu, India
         </div>
       </div>
     </body>
@@ -217,7 +217,7 @@ async function sendPasswordResetOTP(toEmail, otpCode) {
           </div>
         </div>
         <div class="footer">
-          Sent by <strong>KNITE Infotech</strong> (${SENDER_EMAIL}) • Chennai, Tamil Nadu, India
+          Sent by <strong>KNITE Infotech</strong> (${SENDER_EMAIL}) • Nagercoil, Tamil Nadu, India
         </div>
       </div>
     </body>
@@ -594,7 +594,7 @@ async function sendRegistrationConfirmationEmail({ toEmail, shopName, ownerName,
           </p>
         </div>
         <div class="footer">
-          Sent by <strong>KNITE Infotech</strong> (${SENDER_EMAIL}) • Chennai, India
+          Sent by <strong>KNITE Infotech</strong> (${SENDER_EMAIL}) • Nagercoil, India
         </div>
       </div>
     </body>

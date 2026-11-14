@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Lock, FileText, ArrowLeft, Mail, Globe, CheckCircle2 } from 'lucide-react';
+import { Shield, Lock, FileText, ArrowLeft, Mail, Globe, CheckCircle2, Phone, MapPin } from 'lucide-react';
 
 export default function PrivacyPolicyPage() {
   return (
@@ -42,7 +42,7 @@ export default function PrivacyPolicyPage() {
             <span>1. Overview & Commitment</span>
           </h2>
           <p className="text-sm leading-relaxed text-slate-700">
-            KNITE Infotech ("we", "us", or "our") operates the <strong>KNITE Medico</strong> software application (available via web at <code>knitemedico.kniteinfotech.in</code>, mobile Progressive Web Application, and Android APK). This page informs retail pharmacies, chemists, and medical store operators of our strict policies regarding the collection, use, disclosure, and protection of data.
+            KNITE Infotech ("we", "us", or "our"), headquartered in <strong>Nagercoil, Tamil Nadu, India</strong>, operates the <strong>KNITE Medico</strong> software application (available via web at <code>knitemedico.kniteinfotech.in</code>, mobile Progressive Web Application, and Android APK). This page informs retail pharmacies, chemists, and medical store operators of our strict policies regarding the collection, use, disclosure, and protection of data.
           </p>
         </section>
 
@@ -140,17 +140,35 @@ export default function PrivacyPolicyPage() {
           <p className="text-sm text-slate-700">
             If you have questions or wish to exercise data rights under this policy:
           </p>
-          <div className="p-4 rounded-2xl bg-white border border-slate-200 text-xs space-y-1.5 font-medium">
+          <div className="p-4 rounded-2xl bg-white border border-slate-200 text-xs space-y-2 font-medium">
             <p className="font-black text-slate-900 text-sm">KNITE Infotech</p>
             <p className="flex items-center gap-2 text-slate-600">
-              <Mail className="w-3.5 h-3.5 text-[#ff2c2c]" /> 
+              <MapPin className="w-3.5 h-3.5 text-[#ff2c2c] shrink-0" />
+              <span>Location: <strong>Nagercoil, Tamil Nadu, India</strong></span>
+            </p>
+            <p className="flex items-center gap-2 text-slate-600">
+              <Phone className="w-3.5 h-3.5 text-[#ff2c2c] shrink-0" />
+              <span>Phone / WhatsApp: <a href="tel:+918778721940" className="font-bold underline text-slate-900">+91 87787 21940</a></span>
+            </p>
+            <p className="flex items-center gap-2 text-slate-600">
+              <Mail className="w-3.5 h-3.5 text-[#ff2c2c] shrink-0" /> 
               <span>Email: <a href="mailto:kniteinfotech@gmail.com" className="font-bold underline text-slate-900">kniteinfotech@gmail.com</a></span>
             </p>
             <p className="flex items-center gap-2 text-slate-600">
-              <Globe className="w-3.5 h-3.5 text-[#ff2c2c]" /> 
+              <Globe className="w-3.5 h-3.5 text-[#ff2c2c] shrink-0" /> 
               <span>Website: <a href="https://knitemedico.kniteinfotech.in" className="font-bold underline text-slate-900">knitemedico.kniteinfotech.in</a></span>
             </p>
           </div>
+        </section>
+
+        {/* 8. Governing Law & Jurisdiction */}
+        <section className="space-y-3 pt-2">
+          <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+            <span>8. Governing Law & Jurisdiction</span>
+          </h2>
+          <p className="text-sm leading-relaxed text-slate-700">
+            This Policy, our Terms of Service, and all statutory obligations are governed by and construed in accordance with the laws of the Republic of India. Any legal dispute, arbitration, or statutory claim arising from or related to KNITE Medico shall be subject to the exclusive jurisdiction of the competent courts in <strong>Nagercoil, Tamil Nadu, India</strong>.
+          </p>
         </section>
       </main>
     </div>
