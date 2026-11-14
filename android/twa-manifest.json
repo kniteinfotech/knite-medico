@@ -16,6 +16,7 @@
   "iconUrl": "https://knitemedico.kniteinfotech.in/logo_icon.png",
   "maskableIconUrl": "https://knitemedico.kniteinfotech.in/icon.png",
   "splashScreenFadeOutDuration": 300,
+  "minSdkVersion": 24,
   "appVersionName": "1.0.0",
   "appVersionCode": 1,
   "shortcuts": [],
