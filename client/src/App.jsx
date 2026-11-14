@@ -11,6 +11,7 @@ import WhatsAppSetupModal from './components/WhatsAppSetupModal';
 import GSTSettingsModal from './components/GSTSettingsModal';
 import SuperAdminPortal from './components/SuperAdminPortal';
 import PlanSelectionScreen from './components/PlanSelectionScreen';
+import PrivacyPolicyPage from './components/PrivacyPolicyPage';
 import { seedInitialDataIfEmpty, db } from './db/localDb';
 import { SyncService } from './services/syncService';
 
@@ -162,6 +163,12 @@ export default function App() {
     const push = await SyncService.pushSync();
     const pull = await SyncService.pullSync();
     setLastSyncResult({ push, pull, timestamp: new Date().toLocaleTimeString() });
+  }
+
+  // Public Compliance Route: Privacy Policy (for Google Play Store & Legal Compliance)
+  const isPrivacyRoute = window.location.pathname.startsWith('/privacy') || window.location.hash.includes('privacy');
+  if (isPrivacyRoute) {
+    return <PrivacyPolicyPage />;
   }
 
   // 1. DEDICATED /admin ROUTE (Protected strictly for kniteinfotech@gmail.com)
@@ -409,9 +416,13 @@ export default function App() {
           </strong> • Powered by KNITE Medico SaaS
         </p>
 
-        <p className="font-mono text-[11px] text-slate-500">
-          Owner: <span className="font-bold text-[#ff2c2c]">{shopOwner.owner_name}</span> • Local DB Active
-        </p>
+        <div className="flex items-center gap-3 font-mono text-[11px] text-slate-500">
+          <span>Owner: <span className="font-bold text-[#ff2c2c]">{shopOwner.owner_name}</span> • Local DB Active</span>
+          <span>•</span>
+          <a href="/privacy" target="_blank" rel="noopener noreferrer" className="hover:underline text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            Privacy Policy
+          </a>
+        </div>
       </footer>
     </div>
   );

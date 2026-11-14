@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "in.kniteinfotech.knitemedico",
+      "sha256_cert_fingerprints": [
+        "14:6D:E9:44:AB:F0:60:73:86:8E:EB:F6:CD:DF:99:EB:45:4E:14:E4:71:32:8E:30:F4:E4:00:FE:39:74:C4:C8"
+      ]
+    }
+  }
+]
