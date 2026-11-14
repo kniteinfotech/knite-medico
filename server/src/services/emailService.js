@@ -75,7 +75,8 @@ async function verifyConnection() {
   try {
     const mailer = getTransporter();
     if (typeof mailer.verify === 'function') {
-      await mailer.verify();
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP connection timed out after 5s')), 5000));
+      await Promise.race([mailer.verify(), timeoutPromise]);
       return { configured: true, verified: true, message: `SMTP connection active and authenticated for ${process.env.SMTP_USER || 'kniteinfotech@gmail.com'}` };
     }
     return { configured: true, verified: false, message: 'Transporter does not support verify()' };
