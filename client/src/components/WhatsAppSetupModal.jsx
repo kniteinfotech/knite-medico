@@ -421,6 +421,9 @@ export default function WhatsAppSetupModal({ isOpen, onClose, onSave, theme }) {
                       <div className="text-2xl sm:text-4xl font-mono font-black tracking-widest text-emerald-600 dark:text-emerald-400 select-all break-all">
                         {pairingCode}
                       </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                        Enter these 8 characters on your phone (or tap Copy Code to paste)
+                      </p>
 
                       <div className="flex items-center justify-center gap-2 pt-1">
                         <button

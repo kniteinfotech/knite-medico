@@ -83,8 +83,16 @@ async function requestPairingCodeForStore(storeId, phoneNumber) {
     if (session.sock.authState.creds.registered) {
       throw new Error('This pharmacy WhatsApp account is already linked.');
     }
-    // Allow WebSocket connection 3.5s to establish handshake before requesting pairing code
-    await new Promise(r => setTimeout(r, 3500));
+
+    // Wait until socket is actively connected to WhatsApp servers
+    let waited = 0;
+    while ((!session.sock.ws || !session.sock.ws.isOpen) && waited < 8000) {
+      await new Promise(r => setTimeout(r, 200));
+      waited += 200;
+    }
+    // Small extra pause for WhatsApp connection verification
+    await new Promise(r => setTimeout(r, 1000));
+
     try {
       const rawCode = await session.sock.requestPairingCode(cleanPhone);
       const formattedCode = rawCode?.match(/.{1,4}/g)?.join('-') || rawCode;
@@ -113,11 +121,15 @@ async function startStoreSession(storeId, forceNew = false) {
 
   const sessionDir = getSessionDir(storeId);
 
+  const existing = sessions.get(storeId);
+
   // If forceNew is requested, wipe old credentials
   if (forceNew) {
-    const existing = sessions.get(storeId);
     if (existing?.sock) {
-      try { existing.sock.end(); } catch (e) {}
+      try {
+        existing.sock.ev.removeAllListeners();
+        existing.sock.end();
+      } catch (e) {}
     }
     sessions.delete(storeId);
     try {
@@ -126,11 +138,16 @@ async function startStoreSession(storeId, forceNew = false) {
     } catch (err) {
       console.warn(`[WA-${storeId}] Error clearing session dir:`, err.message);
     }
+  } else if (existing?.sock) {
+    // If not forceNew but reconnecting, close old socket cleanly without wiping creds
+    try {
+      existing.sock.ev.removeAllListeners();
+      existing.sock.end();
+    } catch (e) {}
   }
 
-  // If already connected or connecting, return current status
-  const existing = sessions.get(storeId);
-  if (existing && (existing.status === 'CONNECTED' || (existing.status === 'QR_READY' && existing.qrDataUrl))) {
+  // If already connected, return current status
+  if (!forceNew && existing && existing.status === 'CONNECTED') {
     return getStoreStatus(storeId);
   }
 
@@ -138,9 +155,10 @@ async function startStoreSession(storeId, forceNew = false) {
 
   const sessionData = {
     sock: null,
-    status: 'CONNECTING',
-    qrDataUrl: null,
-    userPhone: null,
+    status: existing?.pairingCode ? 'PAIRING_CODE_READY' : 'CONNECTING',
+    qrDataUrl: existing?.qrDataUrl || null,
+    pairingCode: existing?.pairingCode || null,
+    userPhone: existing?.userPhone || null,
     lastError: null
   };
   sessions.set(storeId, sessionData);
@@ -154,7 +172,7 @@ async function startStoreSession(storeId, forceNew = false) {
       syncFullHistory: false,
       connectTimeoutMs: 60000,
       defaultQueryTimeoutMs: 60000,
-      keepAliveIntervalMs: 25000
+      keepAliveIntervalMs: 15000
     });
 
     sessionData.sock = sock;
@@ -181,6 +199,7 @@ async function startStoreSession(storeId, forceNew = false) {
       if (connection === 'open') {
         sessionData.status = 'CONNECTED';
         sessionData.qrDataUrl = null;
+        sessionData.pairingCode = null;
         sessionData.lastError = null;
         const userJid = sock.user?.id || '';
         const phone = userJid.split(':')[0].replace(/[^0-9]/g, '');
@@ -190,28 +209,41 @@ async function startStoreSession(storeId, forceNew = false) {
 
       if (connection === 'close') {
         const statusCode = lastDisconnect?.error?.output?.statusCode;
-        const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-        console.warn(`⚠️ [WA-${storeId}] WhatsApp disconnected (code: ${statusCode}, reconnect: ${shouldReconnect})`);
+        const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+        const isRestart = statusCode === DisconnectReason.restartRequired || statusCode === 515;
 
-        if (statusCode === DisconnectReason.loggedOut) {
+        console.warn(`⚠️ [WA-${storeId}] WhatsApp disconnected (code: ${statusCode}, isRestart: ${isRestart}, isLoggedOut: ${isLoggedOut})`);
+
+        if (isLoggedOut) {
           sessionData.status = 'DISCONNECTED';
           sessionData.qrDataUrl = null;
           sessionData.userPhone = null;
+          sessionData.pairingCode = null;
           sessions.delete(storeId);
           try {
             fs.rmSync(sessionDir, { recursive: true, force: true });
           } catch (e) {}
+        } else if (isRestart) {
+          // CRITICAL: Code 515 (restartRequired) is sent by WhatsApp immediately after the user enters the pairing code!
+          // Reconnect IMMEDIATELY (within 300ms) with the saved credentials so the phone's handshake doesn't timeout!
+          console.log(`⚡ [WA-${storeId}] Pairing code accepted! Reconnecting immediately to complete device link...`);
+          sessionData.status = 'CONNECTING';
+          setTimeout(() => {
+            startStoreSession(storeId, false).catch(err => {
+              console.warn(`[WA-${storeId}] Immediate restart reconnect failed:`, err.message);
+            });
+          }, 300);
         } else {
-          sessionData.status = 'DISCONNECTED';
+          sessionData.status = sessionData.pairingCode ? 'PAIRING_CODE_READY' : 'CONNECTING';
           sessionData.lastError = lastDisconnect?.error?.message || 'Connection closed';
-          // Auto reconnect after brief pause if not logged out
+          // Auto reconnect for normal network drops
           setTimeout(() => {
             if (sessions.has(storeId)) {
               startStoreSession(storeId, false).catch(err => {
                 console.warn(`[WA-${storeId}] Auto reconnect failed:`, err.message);
               });
             }
-          }, 5000);
+          }, 2000);
         }
       }
     });
