@@ -112,8 +112,8 @@ export default function App() {
       try {
         const parsed = JSON.parse(saved);
         setShopOwner(parsed);
-        // Instant cloud sync on boot
-        SyncService.pullSync().catch(() => {});
+        // Instant full cloud sync on boot to pull changes from other devices
+        SyncService.pullSync(true).catch(() => {});
       } catch {
         setShopOwner(null);
       }
@@ -157,8 +157,8 @@ export default function App() {
       });
     } catch {}
 
-    // Immediately pull all latest cloud medicines, invoices, and customers
-    SyncService.pullSync(true).catch(console.warn);
+    // Immediately pull all latest cloud medicines, invoices, and customers before switching UI
+    await SyncService.pullSync(true).catch(console.warn);
 
     if (isNewRegistration) {
       // Show plan selection screen for new registrations
@@ -183,9 +183,16 @@ export default function App() {
     setTimeout(() => setIsWhatsAppModalOpen(true), 600);
   }
 
-  // Logout Handler for shop owner
-  function handleLogout() {
+  // Logout Handler with Zero-Data-Loss cloud push
+  async function handleLogout() {
     if (confirm('Are you sure you want to log out of this medical store session?')) {
+      // 1. Zero-Data-Loss: Flush any pending local changes to cloud before wiping session
+      try {
+        await SyncService.pushSync();
+      } catch (err) {
+        console.warn('Logout sync push notice:', err.message);
+      }
+
       sessionStorage.removeItem('knite_session_active');
       localStorage.removeItem('knite_shop_owner');
       localStorage.removeItem('knite_auth_token');
@@ -212,9 +219,6 @@ export default function App() {
       } else if (e.key === 'F5') {
         e.preventDefault();
         setActiveTab('reports');
-      } else if (e.key === 'F6') {
-        e.preventDefault();
-        setActiveTab('cloud');
       }
     }
 
@@ -222,18 +226,27 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [shopOwner, isAdminRoute]);
 
-  // Background Auto-Sync every 45 seconds
+  // Background Auto-Sync every 30 seconds + instant pull on browser tab focus
   useEffect(() => {
     if (!shopOwner || isAdminRoute) return;
+
+    const handleFocusSync = () => {
+      SyncService.pullSync().catch(() => {});
+    };
+    window.addEventListener('focus', handleFocusSync);
+
     const autoSyncInterval = setInterval(async () => {
       const isOnline = await SyncService.checkCloudHealth();
       if (isOnline) {
         await SyncService.pushSync();
         await SyncService.pullSync();
       }
-    }, 45000);
+    }, 30000);
 
-    return () => clearInterval(autoSyncInterval);
+    return () => {
+      window.removeEventListener('focus', handleFocusSync);
+      clearInterval(autoSyncInterval);
+    };
   }, [shopOwner, isAdminRoute]);
 
   async function triggerManualSync() {

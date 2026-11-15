@@ -441,14 +441,19 @@ export default function WhatsAppSetupModal({ isOpen, onClose, onSave, theme }) {
                         </button>
                       </div>
 
-                      <div className="text-left p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs space-y-1.5 text-emerald-950 dark:text-emerald-100">
-                        <p className="font-black flex items-center gap-1">
-                          <Bell className="w-3.5 h-3.5 text-emerald-600" /> What to do now on your phone:
+                      <div className="text-left p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs space-y-2 text-emerald-950 dark:text-emerald-100">
+                        <p className="font-black flex items-center gap-1.5 text-emerald-900 dark:text-emerald-200">
+                          <Bell className="w-3.5 h-3.5 text-emerald-600" /> How to link on iPhone or Android:
                         </p>
-                        <ol className="list-decimal list-inside space-y-1 font-medium">
-                          <li>Check your phone notifications for: <strong>"Enter code to link new device"</strong>.</li>
-                          <li>Or open <strong>WhatsApp</strong> &gt; <strong>Linked Devices</strong> &gt; <strong>Link with phone number</strong>.</li>
-                          <li>Enter code: <strong className="font-mono text-emerald-700 dark:text-emerald-300">{pairingCode}</strong>.</li>
+                        <ol className="list-decimal list-inside space-y-1.5 font-medium text-[11px] leading-relaxed">
+                          <li>Open <strong>WhatsApp</strong> on this phone.</li>
+                          <li>Go to <strong>Settings</strong> (iPhone) or <strong>⋮ Menu</strong> (Android) &gt; <strong>Linked Devices</strong> &gt; <strong>Link a Device</strong>.</li>
+                          <li>
+                            At the bottom of the camera scanner screen, tap: <span className="font-bold underline text-emerald-700 dark:text-emerald-300">"Link with phone number instead"</span>.
+                          </li>
+                          <li>
+                            Enter this 8-character code: <strong className="font-mono text-emerald-700 dark:text-emerald-300 text-xs bg-emerald-100 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded">{pairingCode}</strong>
+                          </li>
                         </ol>
                       </div>
                     </div>

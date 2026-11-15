@@ -214,27 +214,28 @@ router.post('/push', async (req, res) => {
 router.get('/pull', async (req, res) => {
   const tenantId = req.user.tenant_id;
   const since = req.query.since || '1970-01-01T00:00:00.000Z';
+  const isFull = !since || since === '1970-01-01T00:00:00.000Z' || since === '0';
 
   try {
     const medResult = await pool.query(
-      `SELECT * FROM medico.medicines 
-       WHERE tenant_id = $1 AND updated_at > $2
-       ORDER BY updated_at ASC`,
-      [tenantId, since]
+      isFull
+        ? `SELECT * FROM medico.medicines WHERE tenant_id = $1 ORDER BY updated_at ASC NULLS FIRST`
+        : `SELECT * FROM medico.medicines WHERE tenant_id = $1 AND (updated_at > $2 OR updated_at IS NULL) ORDER BY updated_at ASC NULLS FIRST`,
+      isFull ? [tenantId] : [tenantId, since]
     );
 
     const invResult = await pool.query(
-      `SELECT * FROM medico.invoices 
-       WHERE tenant_id = $1 AND updated_at > $2
-       ORDER BY updated_at ASC LIMIT 500`,
-      [tenantId, since]
+      isFull
+        ? `SELECT * FROM medico.invoices WHERE tenant_id = $1 ORDER BY created_at ASC LIMIT 1000`
+        : `SELECT * FROM medico.invoices WHERE tenant_id = $1 AND (updated_at > $2 OR updated_at IS NULL) ORDER BY updated_at ASC LIMIT 1000`,
+      isFull ? [tenantId] : [tenantId, since]
     );
 
     const custResult = await pool.query(
-      `SELECT * FROM medico.customers 
-       WHERE tenant_id = $1 AND updated_at > $2
-       ORDER BY updated_at ASC`,
-      [tenantId, since]
+      isFull
+        ? `SELECT * FROM medico.customers WHERE tenant_id = $1 ORDER BY updated_at ASC NULLS FIRST`
+        : `SELECT * FROM medico.customers WHERE tenant_id = $1 AND (updated_at > $2 OR updated_at IS NULL) ORDER BY updated_at ASC NULLS FIRST`,
+      isFull ? [tenantId] : [tenantId, since]
     );
 
     res.json({

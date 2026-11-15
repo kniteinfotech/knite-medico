@@ -150,11 +150,11 @@ async function startStoreSession(storeId, forceNew = false) {
       auth: state,
       logger: pino({ level: 'silent' }),
       printQRInTerminal: false,
-      browser: Browsers.ubuntu('Chrome'),
+      browser: Browsers.macOS('Chrome'),
       syncFullHistory: false,
       connectTimeoutMs: 60000,
       defaultQueryTimeoutMs: 60000,
-      keepAliveIntervalMs: 15000
+      keepAliveIntervalMs: 25000
     });
 
     sessionData.sock = sock;
@@ -168,8 +168,11 @@ async function startStoreSession(storeId, forceNew = false) {
         try {
           const qrDataUrl = await QRCode.toDataURL(qr, { margin: 2, scale: 7 });
           sessionData.qrDataUrl = qrDataUrl;
-          sessionData.status = 'QR_READY';
-          console.log(`📲 [WA-${storeId}] New QR Code generated for pairing`);
+          // Protect pairing code state if pharmacist requested pairing code
+          if (sessionData.status !== 'PAIRING_CODE_READY') {
+            sessionData.status = 'QR_READY';
+          }
+          console.log(`📲 [WA-${storeId}] QR Code ready (status: ${sessionData.status})`);
         } catch (qrErr) {
           console.error(`[WA-${storeId}] QR generation failed:`, qrErr);
         }

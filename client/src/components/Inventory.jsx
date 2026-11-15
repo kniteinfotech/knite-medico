@@ -30,6 +30,7 @@ import Pagination from './Pagination';
 
 export default function Inventory({ onStockModified, theme }) {
   const { t } = useLanguage();
+  const isDark = theme === 'dark';
   const [medicines, setMedicines] = useState([]);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -122,7 +123,7 @@ export default function Inventory({ onStockModified, theme }) {
     if (editingMed) {
       await db.medicines.update(editingMed.id, payload);
     } else {
-      const newId = 'med_' + Math.random().toString(36).substring(2, 9);
+      const newId = 'med_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 9);
       await db.medicines.add({ id: newId, ...payload });
     }
     setIsModalOpen(false);
@@ -184,32 +185,40 @@ export default function Inventory({ onStockModified, theme }) {
       id: 'ALL', label: t('total_medicines', 'Total Medicines'), value: medicines.length,
       icon: Boxes,
       gradient: 'from-violet-500 to-indigo-600',
-      bg: 'bg-violet-50', border: 'border-violet-200',
-      text: 'text-violet-700', iconColor: 'text-violet-500',
+      bg: isDark ? 'bg-violet-950/40' : 'bg-violet-50',
+      border: isDark ? 'border-violet-800/60' : 'border-violet-200',
+      text: isDark ? 'text-violet-300' : 'text-violet-700',
+      iconColor: 'text-violet-500',
       activeBorder: 'border-violet-500',
     },
     {
       id: 'LOW_STOCK', label: t('low_stock', 'Low Stock Alert'), value: lowStockCount,
       icon: TrendingDown,
       gradient: 'from-amber-500 to-orange-500',
-      bg: 'bg-amber-50', border: 'border-amber-200',
-      text: 'text-amber-700', iconColor: 'text-amber-500',
+      bg: isDark ? 'bg-amber-950/40' : 'bg-amber-50',
+      border: isDark ? 'border-amber-800/60' : 'border-amber-200',
+      text: isDark ? 'text-amber-300' : 'text-amber-700',
+      iconColor: 'text-amber-500',
       activeBorder: 'border-amber-500',
     },
     {
       id: 'NEAR_EXPIRY', label: t('near_expiry', 'Near Expiry (30d)'), value: nearExpiryCount,
       icon: Clock,
       gradient: 'from-orange-500 to-red-500',
-      bg: 'bg-orange-50', border: 'border-orange-200',
-      text: 'text-orange-700', iconColor: 'text-orange-500',
+      bg: isDark ? 'bg-orange-950/40' : 'bg-orange-50',
+      border: isDark ? 'border-orange-800/60' : 'border-orange-200',
+      text: isDark ? 'text-orange-300' : 'text-orange-700',
+      iconColor: 'text-orange-500',
       activeBorder: 'border-orange-500',
     },
     {
       id: 'EXPIRED', label: t('expired', 'Expired Stock'), value: expiredCount,
       icon: ShieldAlert,
       gradient: 'from-rose-500 to-red-600',
-      bg: 'bg-rose-50', border: 'border-rose-200',
-      text: 'text-rose-700', iconColor: 'text-rose-500',
+      bg: isDark ? 'bg-rose-950/40' : 'bg-rose-50',
+      border: isDark ? 'border-rose-800/60' : 'border-rose-200',
+      text: isDark ? 'text-rose-300' : 'text-rose-700',
+      iconColor: 'text-rose-500',
       activeBorder: 'border-rose-500',
     },
   ];
@@ -220,19 +229,19 @@ export default function Inventory({ onStockModified, theme }) {
       {/* ── Top Bar / Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
-            <span className="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#ff2c2c] to-[#f94449] flex items-center justify-center shadow-lg shadow-red-200">
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+            <span className="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#ff2c2c] to-[#f94449] flex items-center justify-center shadow-lg shadow-red-500/20">
               <Package className="w-5 h-5 text-white" />
             </span>
             {t('inventory', 'Medicine Inventory')}
           </h2>
-          <p className="text-sm text-slate-600 font-medium mt-1 ml-0.5">
+          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 ml-0.5">
             Real-time local database · Expiry tracking · Dosage instructions
           </p>
         </div>
         <button
           onClick={handleOpenAdd}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-[#ff2c2c] to-[#f94449] text-white text-sm font-bold shadow-lg shadow-red-200 hover:brightness-105 active:scale-95 transition-all"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-[#ff2c2c] to-[#f94449] text-white text-sm font-bold shadow-lg shadow-red-500/30 hover:brightness-105 active:scale-95 transition-all"
         >
           <Plus className="w-4 h-4" />
           {t('add_medicine', 'Add Medicine')}
@@ -250,26 +259,28 @@ export default function Inventory({ onStockModified, theme }) {
               onClick={() => { setFilterType(card.id); setGenericSearchSalt(''); }}
               className={`relative overflow-hidden p-4 rounded-2xl border-2 text-left transition-all duration-200 group
                 ${isActive
-                  ? `${card.bg} ${card.activeBorder} shadow-md`
-                  : 'bg-white border-slate-100 hover:border-slate-200 hover:shadow-md'
+                  ? `${card.bg} ${card.activeBorder} shadow-lg shadow-black/20`
+                  : isDark
+                    ? 'bg-[#150f13] border-rose-950/40 text-slate-200 hover:border-rose-900/60 hover:bg-[#1c1319]'
+                    : 'bg-white border-slate-200 text-slate-800 hover:border-slate-300 hover:shadow-md'
                 }`}
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className={`text-xs font-extrabold uppercase tracking-wider mb-1 ${isActive ? card.text : 'text-slate-600'}`}>
+                  <p className={`text-xs font-extrabold uppercase tracking-wider mb-1 ${isActive ? card.text : isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                     {card.label}
                   </p>
-                  <p className={`text-3xl font-black ${isActive ? card.text : 'text-slate-900'}`}>
+                  <p className={`text-3xl font-black ${isActive ? card.text : isDark ? 'text-white' : 'text-slate-900'}`}>
                     {card.value}
                   </p>
                 </div>
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all
                   ${isActive
                     ? `bg-gradient-to-br ${card.gradient} shadow-md`
-                    : 'bg-slate-100 group-hover:bg-slate-200'
+                    : isDark ? 'bg-slate-800/80 text-slate-300' : 'bg-slate-100 group-hover:bg-slate-200'
                   }`}
                 >
-                  <Icon className={`w-4.5 h-4.5 ${isActive ? 'text-white' : 'text-slate-600'}`} />
+                  <Icon className={`w-4.5 h-4.5 ${isActive ? 'text-white' : isDark ? 'text-slate-300' : 'text-slate-600'}`} />
                 </div>
               </div>
               {isActive && (
@@ -282,7 +293,7 @@ export default function Inventory({ onStockModified, theme }) {
 
       {/* ── Generic Salt Filter Banner ── */}
       {genericSearchSalt && (
-        <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-violet-50 border border-violet-200 text-violet-800">
+        <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-violet-50 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800/60 text-violet-800 dark:text-violet-200">
           <div className="flex items-center gap-2.5 text-sm font-semibold">
             <FlaskConical className="w-4 h-4 text-violet-500 shrink-0" />
             Showing substitutes for generic salt:
@@ -290,7 +301,7 @@ export default function Inventory({ onStockModified, theme }) {
           </div>
           <button
             onClick={() => setGenericSearchSalt('')}
-            className="flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-xl bg-violet-100 hover:bg-violet-200 text-violet-700 transition"
+            className="flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-xl bg-violet-100 dark:bg-violet-900/60 hover:bg-violet-200 dark:hover:bg-violet-800 text-violet-700 dark:text-violet-200 transition"
           >
             <X className="w-3 h-3" /> Clear
           </button>
@@ -299,10 +310,10 @@ export default function Inventory({ onStockModified, theme }) {
 
       {/* ── Search ── */}
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
         <input
           type="text"
-          className="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-300 bg-white text-sm text-slate-900 font-semibold placeholder-slate-500 outline-none focus:border-[#ff2c2c] focus:ring-4 focus:ring-red-50 transition-all shadow-sm"
+          className="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-300 dark:border-rose-950/60 bg-white dark:bg-[#150f13] text-sm text-slate-900 dark:text-white font-semibold placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-[#ff2c2c] focus:ring-4 focus:ring-red-500/10 transition-all shadow-sm"
           placeholder={t('search_stock_placeholder', 'Search by brand name, generic salt, batch no, rack location…')}
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -310,7 +321,7 @@ export default function Inventory({ onStockModified, theme }) {
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-xl text-slate-500 hover:text-[#ff2c2c] hover:bg-red-50 transition"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-xl text-slate-400 dark:text-slate-500 hover:text-[#ff2c2c] hover:bg-red-50 dark:hover:bg-rose-950/50 transition"
           >
             <X className="w-4 h-4" />
           </button>
@@ -318,23 +329,23 @@ export default function Inventory({ onStockModified, theme }) {
       </div>
 
       {/* ── Table ── */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-[#140e10] rounded-2xl border border-slate-200 dark:border-rose-950/60 shadow-sm overflow-hidden">
         {/* Table header */}
-        <div className="px-5 py-3.5 bg-slate-100/80 border-b border-slate-200 flex items-center justify-between">
-          <span className="text-xs font-black text-slate-600 uppercase tracking-widest">
+        <div className="px-5 py-3.5 bg-slate-100/80 dark:bg-[#1b1216] border-b border-slate-200 dark:border-rose-950/60 flex items-center justify-between">
+          <span className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
             {filteredMedicines.length} {filteredMedicines.length === 1 ? 'item' : 'items'} found
           </span>
-          <span className="text-xs text-slate-600 font-bold">Prices incl. GST</span>
+          <span className="text-xs text-slate-600 dark:text-slate-400 font-bold">Prices incl. GST</span>
         </div>
 
         <div>
           {filteredMedicines.length === 0 ? (
             <div className="py-16 text-center">
               <div className="flex flex-col items-center gap-3">
-                <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center">
-                  <Archive className="w-7 h-7 text-slate-400" />
+                <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-[#1c1318] flex items-center justify-center">
+                  <Archive className="w-7 h-7 text-slate-400 dark:text-slate-500" />
                 </div>
-                <p className="text-slate-600 font-bold text-sm">No medicines match this filter</p>
+                <p className="text-slate-600 dark:text-slate-400 font-bold text-sm">No medicines match this filter</p>
                 <button
                   onClick={() => { setFilterType('ALL'); setSearch(''); setGenericSearchSalt(''); }}
                   className="text-xs font-bold text-[#ff2c2c] hover:underline"
@@ -346,7 +357,7 @@ export default function Inventory({ onStockModified, theme }) {
           ) : (
             <>
               {/* ── Mobile Medicine Cards (< md) ── */}
-              <div className="block md:hidden divide-y divide-slate-100">
+              <div className="block md:hidden divide-y divide-slate-100 dark:divide-rose-950/40">
                 {paginatedMedicines.map((med) => {
                   const expStatus = getExpiryStatus(med.expiry_date);
                   const isLow = med.stock_qty <= med.min_stock;
@@ -355,20 +366,20 @@ export default function Inventory({ onStockModified, theme }) {
                     <div key={med.id} className="p-4 space-y-2.5">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-extrabold text-slate-900 text-sm leading-tight truncate">{med.name}</h4>
+                          <h4 className="font-extrabold text-slate-900 dark:text-white text-sm leading-tight truncate">{med.name}</h4>
                           <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-xs text-slate-500 font-medium truncate">{med.generic_name || 'Standard OTC'}</span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">{med.generic_name || 'Standard OTC'}</span>
                             {med.generic_name && (
                               <button
                                 onClick={() => setGenericSearchSalt(med.generic_name)}
-                                className="text-[10px] font-black text-violet-700 bg-violet-100 px-1.5 py-0.2 rounded shrink-0"
+                                className="text-[10px] font-black text-violet-700 dark:text-violet-300 bg-violet-100 dark:bg-violet-900/50 px-1.5 py-0.2 rounded shrink-0"
                               >
                                 Subs
                               </button>
                             )}
                           </div>
                           {med.description && (
-                            <p className="text-[11px] text-slate-500 mt-1 line-clamp-1 italic">
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-1 italic">
                               📝 {med.description}
                             </p>
                           )}
@@ -378,14 +389,14 @@ export default function Inventory({ onStockModified, theme }) {
                         <div className="flex items-center gap-1 shrink-0">
                           <button
                             onClick={() => handleOpenEdit(med)}
-                            className="p-2 rounded-xl bg-slate-100 text-slate-600 active:bg-slate-200"
+                            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 active:bg-slate-200 dark:active:bg-slate-700"
                             aria-label="Edit medicine"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(med.id)}
-                            className="p-2 rounded-xl bg-rose-50 text-rose-600 active:bg-rose-100"
+                            className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 active:bg-rose-100 dark:active:bg-rose-900/50"
                             aria-label="Delete medicine"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -396,39 +407,39 @@ export default function Inventory({ onStockModified, theme }) {
                       {/* Badges Row */}
                       <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
                         {med.rack && (
-                          <span className="inline-flex items-center gap-1 font-mono font-black text-[#ff2c2c] bg-red-50 px-2 py-0.5 rounded-lg border border-red-200">
+                          <span className="inline-flex items-center gap-1 font-mono font-black text-[#ff2c2c] bg-red-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-lg border border-red-200 dark:border-rose-900/50">
                             <MapPin className="w-3 h-3 text-red-500" /> Rack: {med.rack}
                           </span>
                         )}
-                        <span className="font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">
+                        <span className="font-mono text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-[#1f151b] px-2 py-0.5 rounded-lg border border-slate-200 dark:border-rose-950/50">
                           Batch: {med.batch_number || '—'}
                         </span>
                         {expStatus === 'EXPIRED' && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-red-50 text-red-700 border border-red-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-red-50 dark:bg-rose-950/60 text-red-700 dark:text-rose-300 border border-red-200 dark:border-rose-800/60">
                             <ShieldAlert className="w-3 h-3 text-red-600" /> EXP {med.expiry_date}
                           </span>
                         )}
                         {expStatus === 'NEAR_EXPIRY' && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-amber-50 text-amber-800 border border-amber-300">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800/60">
                             <Clock className="w-3 h-3 text-amber-600" /> Exp: {med.expiry_date}
                           </span>
                         )}
                         {expStatus === 'GOOD' && (
-                          <span className="text-[11px] font-mono text-slate-500">
+                          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
                             Exp: {med.expiry_date || 'N/A'}
                           </span>
                         )}
                       </div>
 
                       {/* Pricing and Stock Footer */}
-                      <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-rose-950/40">
                         {/* Stock Badge */}
                         <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black border ${
                           isOut
-                            ? 'bg-red-50 text-red-700 border-red-200'
+                            ? 'bg-red-50 dark:bg-rose-950/60 text-red-700 dark:text-rose-300 border-red-200 dark:border-rose-800/60'
                             : isLow
-                            ? 'bg-amber-50 text-amber-800 border-amber-300'
-                            : 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                            ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800/60'
+                            : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800/60'
                         }`}>
                           {isOut && <ShieldAlert className="w-3 h-3" />}
                           {!isOut && isLow && <TrendingDown className="w-3 h-3" />}
@@ -439,11 +450,11 @@ export default function Inventory({ onStockModified, theme }) {
                         {/* Price */}
                         <div className="flex items-baseline gap-2">
                           {med.mrp && parseFloat(med.mrp) > parseFloat(med.sale_price) && (
-                            <span className="text-xs font-mono text-slate-400 line-through">
+                            <span className="text-xs font-mono text-slate-400 dark:text-slate-500 line-through">
                               ₹{parseFloat(med.mrp).toFixed(2)}
                             </span>
                           )}
-                          <span className="text-base font-black font-mono text-slate-900">
+                          <span className="text-base font-black font-mono text-slate-900 dark:text-white">
                             ₹{parseFloat(med.sale_price).toFixed(2)}
                           </span>
                         </div>
@@ -457,7 +468,7 @@ export default function Inventory({ onStockModified, theme }) {
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50 text-xs font-black text-slate-700 uppercase tracking-wider">
+                    <tr className="border-b border-slate-200 dark:border-rose-950/60 bg-slate-50 dark:bg-[#191014] text-xs font-black text-slate-700 dark:text-rose-200 uppercase tracking-wider">
                       <th className="px-5 py-3">{t('medicine_name', 'Medicine / Salt')}</th>
                       <th className="px-4 py-3">{t('batch_number', 'Batch')}</th>
                       <th className="px-4 py-3">{t('expiry_date', 'Expiry')}</th>
@@ -477,28 +488,28 @@ export default function Inventory({ onStockModified, theme }) {
                       return (
                         <tr
                           key={med.id}
-                          className={`border-b border-slate-100 hover:bg-slate-50 transition-colors group ${
-                            idx % 2 === 0 ? '' : 'bg-slate-50/50'
+                          className={`border-b border-slate-100 dark:border-rose-950/30 hover:bg-slate-50 dark:hover:bg-[#1e1317] transition-colors group ${
+                            idx % 2 === 0 ? '' : 'bg-slate-50/50 dark:bg-[#160f13]/40'
                           }`}
                         >
                           {/* Medicine Name & Description */}
                           <td className="px-5 py-3.5">
-                            <div className="font-extrabold text-slate-900 text-[13px] leading-tight">{med.name}</div>
+                            <div className="font-extrabold text-slate-900 dark:text-white text-[13px] leading-tight">{med.name}</div>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[11px] text-slate-600 font-semibold">
+                              <span className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">
                                 {med.generic_name || 'Standard OTC'}
                               </span>
                               {med.generic_name && (
                                 <button
                                   onClick={() => setGenericSearchSalt(med.generic_name)}
-                                  className="text-[10px] font-black text-violet-700 hover:text-violet-900 bg-violet-100 hover:bg-violet-200 px-1.5 py-0.5 rounded-md transition"
+                                  className="text-[10px] font-black text-violet-700 dark:text-violet-300 hover:text-violet-900 dark:hover:text-violet-100 bg-violet-100 dark:bg-violet-900/50 hover:bg-violet-200 dark:hover:bg-violet-800 px-1.5 py-0.5 rounded-md transition"
                                 >
                                   Substitutes
                                 </button>
                               )}
                             </div>
                             {med.description && (
-                              <div className="text-[11px] text-slate-600 font-medium mt-1 bg-slate-100/90 rounded-lg px-2 py-0.5 line-clamp-1 border border-slate-200/60 flex items-center gap-1.5" title={med.description}>
+                              <div className="text-[11px] text-slate-600 dark:text-slate-400 font-medium mt-1 bg-slate-100/90 dark:bg-[#1f151b] rounded-lg px-2 py-0.5 line-clamp-1 border border-slate-200/60 dark:border-rose-950/50 flex items-center gap-1.5" title={med.description}>
                                 <FileText className="w-3 h-3 text-[#ff2c2c] shrink-0" />
                                 <span className="truncate">{med.description}</span>
                               </div>
@@ -507,7 +518,7 @@ export default function Inventory({ onStockModified, theme }) {
 
                           {/* Batch */}
                           <td className="px-4 py-3.5">
-                            <span className="font-mono text-[11px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">
+                            <span className="font-mono text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-[#1f151b] px-2 py-0.5 rounded-lg border border-slate-200 dark:border-rose-950/50">
                               {med.batch_number || '—'}
                             </span>
                           </td>
@@ -515,19 +526,19 @@ export default function Inventory({ onStockModified, theme }) {
                           {/* Expiry */}
                           <td className="px-4 py-3.5">
                             {expStatus === 'EXPIRED' && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-red-50 text-red-700 border border-red-200">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-red-50 dark:bg-rose-950/60 text-red-700 dark:text-rose-300 border border-red-200 dark:border-rose-800/60">
                                 <ShieldAlert className="w-3 h-3 text-red-600" />
                                 EXP {med.expiry_date}
                               </span>
                             )}
                             {expStatus === 'NEAR_EXPIRY' && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-amber-50 text-amber-800 border border-amber-300">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800/60">
                                 <Clock className="w-3 h-3 text-amber-600" />
                                 {med.expiry_date}
                               </span>
                             )}
                             {expStatus === 'GOOD' && (
-                              <span className="text-[12px] font-mono font-bold text-slate-700">
+                              <span className="text-[12px] font-mono font-bold text-slate-700 dark:text-slate-300">
                                 {med.expiry_date || 'N/A'}
                               </span>
                             )}
@@ -535,7 +546,7 @@ export default function Inventory({ onStockModified, theme }) {
 
                           {/* Rack */}
                           <td className="px-4 py-3.5">
-                            <span className="inline-flex items-center gap-1 font-mono text-[11px] font-black text-[#ff2c2c] bg-red-50 px-2 py-0.5 rounded-lg border border-red-200">
+                            <span className="inline-flex items-center gap-1 font-mono text-[11px] font-black text-[#ff2c2c] bg-red-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-lg border border-red-200 dark:border-rose-900/50">
                               <MapPin className="w-3 h-3 text-red-500" />
                               {med.rack || '—'}
                             </span>
@@ -543,21 +554,21 @@ export default function Inventory({ onStockModified, theme }) {
 
                           {/* GST */}
                           <td className="px-4 py-3.5 text-center">
-                            <span className="font-mono text-xs font-extrabold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">
+                            <span className="font-mono text-xs font-extrabold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-[#1f151b] px-2 py-0.5 rounded-lg border border-slate-200 dark:border-rose-950/50">
                               {med.gst_rate ?? 0}%
                             </span>
                           </td>
 
                           {/* MRP */}
                           <td className="px-4 py-3.5 text-right">
-                            <span className="text-[12px] font-mono font-semibold text-slate-500 line-through">
+                            <span className="text-[12px] font-mono font-semibold text-slate-500 dark:text-slate-400 line-through">
                               ₹{parseFloat(med.mrp || 0).toFixed(2)}
                             </span>
                           </td>
 
                           {/* Sale Rate */}
                           <td className="px-4 py-3.5 text-right">
-                            <span className="text-[13px] font-black font-mono text-slate-900">
+                            <span className="text-[13px] font-black font-mono text-slate-900 dark:text-white">
                               ₹{parseFloat(med.sale_price).toFixed(2)}
                             </span>
                           </td>
@@ -566,10 +577,10 @@ export default function Inventory({ onStockModified, theme }) {
                           <td className="px-4 py-3.5 text-center">
                             <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-black border ${
                               isOut
-                                ? 'bg-red-50 text-red-700 border-red-200'
+                                ? 'bg-red-50 dark:bg-rose-950/60 text-red-700 dark:text-rose-300 border-red-200 dark:border-rose-800/60'
                                 : isLow
-                                ? 'bg-amber-50 text-amber-800 border-amber-300'
-                                : 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800/60'
+                                : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800/60'
                             }`}>
                               {isOut && <ShieldAlert className="w-3 h-3" />}
                               {!isOut && isLow && <TrendingDown className="w-3 h-3" />}
@@ -583,14 +594,14 @@ export default function Inventory({ onStockModified, theme }) {
                             <div className="flex items-center justify-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
                               <button
                                 onClick={() => handleOpenEdit(med)}
-                                className="p-2 rounded-xl text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 transition"
+                                className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition"
                                 title="Edit"
                               >
                                 <Edit3 className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 onClick={() => handleDelete(med.id)}
-                                className="p-2 rounded-xl text-slate-600 hover:text-red-600 hover:bg-red-50 transition"
+                                className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-rose-950/50 transition"
                                 title="Delete"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -605,7 +616,7 @@ export default function Inventory({ onStockModified, theme }) {
               </div>
 
               {/* 10 per page pagination */}
-              <div className="p-3 border-t border-slate-100">
+              <div className="p-3 border-t border-slate-100 dark:border-rose-950/40">
                 <Pagination
                   currentPage={currentPage}
                   totalItems={filteredMedicines.length}
@@ -621,8 +632,8 @@ export default function Inventory({ onStockModified, theme }) {
 
       {/* ── Add / Edit Modal ── */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl shadow-black/20 overflow-hidden border border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-[#160f13] rounded-3xl w-full max-w-lg shadow-2xl shadow-black/40 overflow-hidden border border-slate-200 dark:border-rose-950/70">
 
             {/* Modal Header */}
             <div className="px-6 py-4 bg-gradient-to-r from-[#ff2c2c] to-[#f94449] flex items-center justify-between">
@@ -652,12 +663,12 @@ export default function Inventory({ onStockModified, theme }) {
 
               {/* Name */}
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 mb-1.5">
-                  <Tag className="w-3 h-3 text-slate-500" /> {t('medicine_name', 'Brand / Medicine Name *')}
+                <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 dark:text-slate-300 mb-1.5">
+                  <Tag className="w-3 h-3 text-slate-500 dark:text-slate-400" /> {t('medicine_name', 'Brand / Medicine Name *')}
                 </label>
                 <input
                   type="text" required
-                  className="input-field text-slate-900 font-semibold"
+                  className="input-field text-slate-900 dark:text-white dark:bg-[#20151a] dark:border-rose-950/70 font-semibold"
                   placeholder="e.g. Augmentin 625 Duo Tablet"
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -666,12 +677,12 @@ export default function Inventory({ onStockModified, theme }) {
 
               {/* Generic */}
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 mb-1.5">
-                  <FlaskConical className="w-3 h-3 text-slate-500" /> {t('generic_composition', 'Generic Salt / Composition')}
+                <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 dark:text-slate-300 mb-1.5">
+                  <FlaskConical className="w-3 h-3 text-slate-500 dark:text-slate-400" /> {t('generic_composition', 'Generic Salt / Composition')}
                 </label>
                 <input
                   type="text"
-                  className="input-field text-slate-900 font-semibold"
+                  className="input-field text-slate-900 dark:text-white dark:bg-[#20151a] dark:border-rose-950/70 font-semibold"
                   placeholder="e.g. Amoxicillin (500mg) + Clavulanic Acid (125mg)"
                   value={formData.generic_name}
                   onChange={e => setFormData({ ...formData, generic_name: e.target.value })}
@@ -680,12 +691,12 @@ export default function Inventory({ onStockModified, theme }) {
 
               {/* Medicine Description / Dosage & Usage Notes */}
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 mb-1.5">
+                <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 dark:text-slate-300 mb-1.5">
                   <FileText className="w-3.5 h-3.5 text-[#ff2c2c]" /> {t('medicine_description', 'Medicine Description / Dosage Notes')}
                 </label>
                 <textarea
                   rows={2}
-                  className="input-field text-slate-900 font-medium text-xs resize-none"
+                  className="input-field text-slate-900 dark:text-white dark:bg-[#20151a] dark:border-rose-950/70 font-medium text-xs resize-none"
                   placeholder={t('medicine_description_placeholder', 'e.g. Take 1 tablet after meals twice daily. Store below 25°C. Useful for fever/infection.')}
                   value={formData.description || ''}
                   onChange={e => setFormData({ ...formData, description: e.target.value })}
@@ -695,24 +706,24 @@ export default function Inventory({ onStockModified, theme }) {
               {/* Batch + Expiry */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 mb-1.5">
-                    <Hash className="w-3 h-3 text-slate-500" /> {t('batch_number', 'Batch Number')}
+                  <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 dark:text-slate-300 mb-1.5">
+                    <Hash className="w-3 h-3 text-slate-500 dark:text-slate-400" /> {t('batch_number', 'Batch Number')}
                   </label>
                   <input
                     type="text"
-                    className="input-field font-mono text-slate-900 font-bold"
+                    className="input-field font-mono text-slate-900 dark:text-white dark:bg-[#20151a] dark:border-rose-950/70 font-bold"
                     placeholder="BCH-8821"
                     value={formData.batch_number}
                     onChange={e => setFormData({ ...formData, batch_number: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 mb-1.5">
-                    <CalendarDays className="w-3 h-3 text-slate-500" /> {t('expiry_date', 'Expiry Date')}
+                  <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 dark:text-slate-300 mb-1.5">
+                    <CalendarDays className="w-3 h-3 text-slate-500 dark:text-slate-400" /> {t('expiry_date', 'Expiry Date')}
                   </label>
                   <input
                     type="date"
-                    className="input-field text-slate-900 font-semibold"
+                    className="input-field text-slate-900 dark:text-white dark:bg-[#20151a] dark:border-rose-950/70 font-semibold"
                     value={formData.expiry_date}
                     onChange={e => setFormData({ ...formData, expiry_date: e.target.value })}
                   />
@@ -722,23 +733,23 @@ export default function Inventory({ onStockModified, theme }) {
               {/* Rack + GST */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 mb-1.5">
-                    <MapPin className="w-3 h-3 text-slate-500" /> Rack / Shelf Location
+                  <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 dark:text-slate-300 mb-1.5">
+                    <MapPin className="w-3 h-3 text-slate-500 dark:text-slate-400" /> Rack / Shelf Location
                   </label>
                   <input
                     type="text"
-                    className="input-field font-mono uppercase text-slate-900 font-bold"
+                    className="input-field font-mono uppercase text-slate-900 dark:text-white dark:bg-[#20151a] dark:border-rose-950/70 font-bold"
                     placeholder="B-01"
                     value={formData.rack}
                     onChange={e => setFormData({ ...formData, rack: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 mb-1.5">
-                    <ScanLine className="w-3 h-3 text-slate-500" /> GST Slab
+                  <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 dark:text-slate-300 mb-1.5">
+                    <ScanLine className="w-3 h-3 text-slate-500 dark:text-slate-400" /> GST Slab
                   </label>
                   <select
-                    className="input-field font-bold text-slate-900"
+                    className="input-field font-bold text-slate-900 dark:text-white dark:bg-[#20151a] dark:border-rose-950/70"
                     value={formData.gst_rate}
                     onChange={e => setFormData({ ...formData, gst_rate: e.target.value })}
                   >
@@ -753,23 +764,23 @@ export default function Inventory({ onStockModified, theme }) {
 
               {/* Prices */}
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 mb-2">
-                  <IndianRupee className="w-3 h-3 text-slate-500" /> Pricing
+                <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 dark:text-slate-300 mb-2">
+                  <IndianRupee className="w-3 h-3 text-slate-500 dark:text-slate-400" /> Pricing
                 </label>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="text-[10px] text-slate-600 font-bold mb-1 block">MRP (₹)</label>
-                    <input type="number" step="0.01" className="input-field text-sm font-semibold text-slate-900" placeholder="100.00"
+                    <label className="text-[10px] text-slate-600 dark:text-slate-400 font-bold mb-1 block">MRP (₹)</label>
+                    <input type="number" step="0.01" className="input-field text-sm font-semibold text-slate-900 dark:text-white dark:bg-[#20151a] dark:border-rose-950/70" placeholder="100.00"
                       value={formData.mrp} onChange={e => setFormData({ ...formData, mrp: e.target.value })} />
                   </div>
                   <div>
-                    <label className="text-[10px] text-slate-600 font-bold mb-1 block">Purchase (₹)</label>
-                    <input type="number" step="0.01" className="input-field text-sm font-semibold text-slate-900" placeholder="70.00"
+                    <label className="text-[10px] text-slate-600 dark:text-slate-400 font-bold mb-1 block">Purchase (₹)</label>
+                    <input type="number" step="0.01" className="input-field text-sm font-semibold text-slate-900 dark:text-white dark:bg-[#20151a] dark:border-rose-950/70" placeholder="70.00"
                       value={formData.purchase_price} onChange={e => setFormData({ ...formData, purchase_price: e.target.value })} />
                   </div>
                   <div>
                     <label className="text-[10px] text-[#ff2c2c] font-black mb-1 block">Sale Rate * (₹)</label>
-                    <input type="number" step="0.01" required className="input-field text-sm font-bold text-slate-900 border-[#ffd7db] focus:border-[#ff2c2c]"
+                    <input type="number" step="0.01" required className="input-field text-sm font-bold text-slate-900 dark:text-white dark:bg-[#20151a] border-[#ffd7db] dark:border-rose-950 focus:border-[#ff2c2c]"
                       placeholder="95.00" value={formData.sale_price}
                       onChange={e => setFormData({ ...formData, sale_price: e.target.value })} />
                   </div>
@@ -779,33 +790,33 @@ export default function Inventory({ onStockModified, theme }) {
               {/* Stock */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 mb-1.5">
-                    <Boxes className="w-3 h-3 text-slate-500" /> Stock Quantity
+                  <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 dark:text-slate-300 mb-1.5">
+                    <Boxes className="w-3 h-3 text-slate-500 dark:text-slate-400" /> Stock Quantity
                   </label>
-                  <input type="number" className="input-field font-mono font-bold text-slate-900" placeholder="50"
+                  <input type="number" className="input-field font-mono font-bold text-slate-900 dark:text-white dark:bg-[#20151a] dark:border-rose-950/70" placeholder="50"
                     value={formData.stock_qty} onChange={e => setFormData({ ...formData, stock_qty: e.target.value })} />
                 </div>
                 <div>
-                  <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 mb-1.5">
-                    <AlertTriangle className="w-3 h-3 text-slate-500" /> Min Stock Warning
+                  <label className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700 dark:text-slate-300 mb-1.5">
+                    <AlertTriangle className="w-3 h-3 text-slate-500 dark:text-slate-400" /> Min Stock Warning
                   </label>
-                  <input type="number" className="input-field font-mono font-bold text-slate-900" placeholder="15"
+                  <input type="number" className="input-field font-mono font-bold text-slate-900 dark:text-white dark:bg-[#20151a] dark:border-rose-950/70" placeholder="15"
                     value={formData.min_stock} onChange={e => setFormData({ ...formData, min_stock: e.target.value })} />
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 pt-2 border-t border-slate-200">
+              <div className="flex gap-3 pt-2 border-t border-slate-200 dark:border-rose-950/60">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-2xl border border-slate-300 text-slate-700 text-sm font-bold hover:bg-slate-100 transition"
+                  className="flex-1 py-2.5 rounded-2xl border border-slate-300 dark:border-rose-950/70 text-slate-700 dark:text-slate-300 text-sm font-bold hover:bg-slate-100 dark:hover:bg-[#20151a] transition"
                 >
                   {t('cancel', 'Cancel')}
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-[#ff2c2c] to-[#f94449] text-white text-sm font-black shadow-md shadow-red-200 hover:brightness-105 active:scale-95 transition-all"
+                  className="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-[#ff2c2c] to-[#f94449] text-white text-sm font-black shadow-md shadow-red-500/20 hover:brightness-105 active:scale-95 transition-all"
                 >
                   {editingMed ? t('save_changes', 'Save Changes') : t('add_to_inventory', 'Add to Inventory')}
                 </button>

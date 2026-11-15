@@ -102,7 +102,6 @@ export default function Navbar({
     { id: 'inventory', label: t('inventory', 'Medicines & Stock'),  shortLabel: 'Stock',     icon: Package,      hotkey: 'F3' },
     { id: 'invoices',  label: t('invoices', 'Bills & History'),    shortLabel: 'Invoices',  icon: FileText,     hotkey: 'F4' },
     { id: 'reports',   label: t('reports', 'Analytics & GST'),    shortLabel: 'Reports',   icon: BarChart3,    hotkey: 'F5' },
-    { id: 'cloud',     label: t('cloud_sync', 'Cloud & Sync'),       shortLabel: 'Cloud',     icon: Cloud,        hotkey: 'F6' },
   ];
 
   const isDark = theme === 'dark';
@@ -200,45 +199,29 @@ export default function Navbar({
               <span>WhatsApp</span>
             </button>
 
-            {/* Subscription & Days Left Badge */}
-            <button
-              onClick={onOpenPhonePeUpgrade}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-black shadow-sm transition border ${
+            {/* Subscription & Days Left Badge (All-In-One ₹922/mo Cloud SaaS) */}
+            <div
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-black shadow-xs border ${
                 isPaidPlan 
-                  ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-800 dark:text-emerald-300 hover:brightness-110' 
-                  : 'bg-amber-500/15 border-amber-400/50 text-amber-800 dark:text-amber-300 hover:brightness-105'
+                  ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-800 dark:text-emerald-300' 
+                  : 'bg-amber-500/15 border-amber-400/50 text-amber-800 dark:text-amber-300'
               }`}
-              title={`Active Plan: ${planName}. Click to view subscription plans & payment options.`}
+              title="All-In-One Cloud Plan (₹922/mo) includes Real-time Cloud Sync, Automated WhatsApp & Mobile Access."
             >
               <Sparkles className={`w-3.5 h-3.5 ${isPaidPlan ? 'text-emerald-500' : 'text-amber-500 animate-pulse'}`} />
-              <span>{planName} • {daysLeft} {daysLeft === 1 ? 'Day' : 'Days'} Left</span>
-            </button>
+              <span>₹922 Cloud Plan • {daysLeft} {daysLeft === 1 ? 'Day' : 'Days'} Left</span>
+            </div>
 
-            {/* Cloud Status Indicator */}
-            {shopOwner?.plan_type === 'pro_cloud' || shopOwner?.plan_type === 'cloud' || isCloudOnline ? (
-              <button
-                onClick={() => setActiveTab('cloud')}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-black shadow-sm hover:bg-emerald-100 transition"
-                title="Cloud Sync Active — click to open Cloud page"
-              >
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <Cloud className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Cloud</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => setActiveTab('cloud')}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#5f259f] to-[#7b2cbf] text-white text-xs font-black shadow-md shadow-purple-900/20 hover:brightness-110 active:scale-[0.98] transition"
-                title="Click to upgrade or manage Cloud Sync"
-              >
-                <Zap className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-                <span>Cloud</span>
-                <span className="px-1 py-0.5 rounded bg-white/20 text-[10px]">₹999</span>
-              </button>
-            )}
+            {/* Real-time Cloud Auto-Sync Indicator */}
+            <button
+              onClick={handleManualSync}
+              disabled={isSyncing}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-black shadow-xs hover:bg-emerald-500/20 active:scale-95 transition"
+              title="All-In-One Cloud SaaS — Multi-device data auto-synced. Click to sync now."
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'Syncing...' : 'Cloud Synced'}</span>
+            </button>
 
             {/* Light / Dark Mode Toggle */}
             <button
@@ -364,7 +347,7 @@ export default function Navbar({
           ? 'bg-[#120a0d]/95 border-rose-950/70 text-slate-300' 
           : 'bg-white/95 border-[#ffd7db] text-slate-700'
       }`}>
-        <div className="grid grid-cols-5 gap-0.5 max-w-md mx-auto items-center">
+        <div className="grid grid-cols-4 gap-1 max-w-md mx-auto items-center">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -431,32 +414,30 @@ export default function Navbar({
             {/* Drawer Items */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               
-              {/* Cloud Sync Status Card */}
+              {/* All-In-One Cloud Status Card */}
               <div className={`p-3.5 rounded-2xl border ${
                 isDark ? 'bg-[#1f1216] border-rose-950/50' : 'bg-rose-50/70 border-rose-100'
               }`}>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs font-black uppercase text-[#ff2c2c] flex items-center gap-1.5">
-                    <Cloud className="w-3.5 h-3.5" /> Cloud Sync
+                    <Cloud className="w-3.5 h-3.5" /> All-In-One Cloud SaaS
                   </span>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                    isCloudOnline ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                  }`}>
-                    {isCloudOnline ? 'Online' : 'Local Only'}
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+                    ₹922 Plan Active
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3">
-                  Automatic background synchronization to server for safe medical data backup.
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 mb-3 font-medium">
+                  Continuous multi-device cloud synchronization. Your medical data is always backed up with zero data loss.
                 </p>
                 <button
                   onClick={() => {
-                    setIsMobileDrawerOpen(false);
-                    setActiveTab('cloud');
+                    handleManualSync();
                   }}
-                  className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-[#ff2c2c] to-[#f94449] text-white text-xs font-black flex items-center justify-center gap-1.5 shadow-md shadow-[#ff2c2c]/30"
+                  disabled={isSyncing}
+                  className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#ff2c2c] to-[#f94449] text-white text-xs font-black flex items-center justify-center gap-2 shadow-md shadow-[#ff2c2c]/30 active:scale-95 transition"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Open Cloud Portal</span>
+                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                  <span>{isSyncing ? 'Syncing...' : 'Sync Cloud Data Now'}</span>
                 </button>
               </div>
 
@@ -486,20 +467,6 @@ export default function Navbar({
                   <span className="flex items-center gap-2.5">
                     <Percent className="w-4 h-4 text-[#ff2c2c]" />
                     <span>Configure GST Slabs</span>
-                  </span>
-                  <ChevronRight className="w-4 h-4 opacity-50" />
-                </button>
-
-                <button
-                  onClick={() => {
-                    setIsMobileDrawerOpen(false);
-                    onOpenPhonePeUpgrade();
-                  }}
-                  className="w-full flex items-center justify-between p-3 rounded-xl bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 font-bold text-xs hover:bg-purple-100 transition"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Zap className="w-4 h-4 text-purple-600" />
-                    <span>Upgrade Cloud Tier</span>
                   </span>
                   <ChevronRight className="w-4 h-4 opacity-50" />
                 </button>
