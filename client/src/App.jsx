@@ -142,23 +142,21 @@ export default function App() {
     seedInitialDataIfEmpty().catch(console.error);
   }, []);
 
-  // Handle successful login / registration
-  async function handleAuthSuccess(ownerProfile, isNewRegistration) {
+  // Handle successful login / registration - instant transition with background sync
+  function handleAuthSuccess(ownerProfile, isNewRegistration) {
     sessionStorage.setItem('knite_session_active', 'true');
     setShopOwner(ownerProfile);
     localStorage.setItem('knite_shop_owner', JSON.stringify(ownerProfile));
 
-    try {
-      await db.settings.put({
-        key: 'store_profile',
-        ...ownerProfile,
-        plan_type: ownerProfile.plan_type || 'cloud_900',
-        is_cloud_enabled: true
-      });
-    } catch {}
+    db.settings.put({
+      key: 'store_profile',
+      ...ownerProfile,
+      plan_type: ownerProfile.plan_type || 'cloud_900',
+      is_cloud_enabled: true
+    }).catch(() => {});
 
-    // Immediately pull all latest cloud medicines, invoices, and customers before switching UI
-    await SyncService.pullSync(true).catch(console.warn);
+    // Run full cloud sync asynchronously in background without blocking UI login
+    SyncService.pullSync(true).catch(console.warn);
 
     if (isNewRegistration) {
       // Show plan selection screen for new registrations

@@ -245,8 +245,8 @@ export default function AuthScreen({ onAuthSuccess, onOpenSuperAdmin, theme }) {
           plan_expires_at: data.tenant.plan_expires_at
         };
         localStorage.setItem('knite_shop_owner', JSON.stringify(ownerProfile));
-        await db.settings.put({ key: 'store_profile', ...ownerProfile });
-        onAuthSuccess(ownerProfile, false);
+        db.settings.put({ key: 'store_profile', ...ownerProfile }).catch(() => {});
+        if (onAuthSuccess) onAuthSuccess(ownerProfile, false);
       }
     } catch (err) {
       // Fallback: local offline DB check if network was unreachable
